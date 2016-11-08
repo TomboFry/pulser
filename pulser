@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Pulser Updater
+
+usage() {
+	cat <<EOM
+Usage:
+$(basename $0) ModuleName Text [Value] [State: created|progress|ongoing|finished]
+EOM
+	exit 1
+}
+
+if [[ $# -lt 2 ]]; then
+	usage
+fi
+
+url="" # Edit to point to the pulser server
+module=$1
+text=$2
+value=$3
+state=$4
+
+res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" http://$url/modules/$module | cat)
+
+status=$($res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
+
+if [[ $status == "success" ]]; then
+	exit 0
+else
+	exit 1
+fi
