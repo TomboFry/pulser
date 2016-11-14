@@ -12,6 +12,12 @@ const monk = require("monk");
 // Printing useful access details to the log
 const morgan = require("morgan");
 
+// Require bcrypt to hash passwords and authenticate users
+const bcrypt = require("bcrypt-nodejs");
+
+// Generates random IDs to be used for the login tokens
+const hat = require("hat");
+
 // Contains all the configuration for connecting to the mongo database
 // and running the express server
 const cf = require("./config");
@@ -37,28 +43,144 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 		const app = express();
 		app.use (bodyParser.urlencoded( { extended: true } ));
 		app.use (bodyParser.json());
+		app.use (morgan("dev"));
 
 		// Create a router and make sure it prints details to the log
 		// after every request
 		const router = express.Router();
-		router.use(morgan("dev"));
 
-		// Get an instance of the modules collection
+		// Get an instance of the module and user collections
 		let mod = db.get("modules");
-		// And keep it up to date after every request
-		router.use((req, res, next) => {
+		let users = db.get("users");
+
+		// And keep them up to date after every request
+		router.use("/modules", (req, res, next) => {
 			mod = db.get("modules");
+
+			// Authenticate after every request
+			if (req.headers.authorization) {
+				const encoded = req.headers.authorization.split(' ')[1];
+				let decoded = new Buffer(encoded, 'base64')
+				                  .toString('utf8')
+				                  .split(":");
+				users
+				.findOne({username: decoded[0], token: decoded[1]})
+				.then(user => {
+					if (user !== null && user.token_expiry > Date.now()) {
+						next();
+					} else {
+						resJson(res, status.ERR, "Authentication failed");
+					}
+				})
+				.catch(routeError(res));
+			} else {
+				resJson(res, status.ERR, "Authentication required");
+			}
+		});
+
+		router.use("/users", (req, res, next) => {
+			users = db.get("users");
 			next();
 		});
 
 		// When the homepage is requested just print it was successful
-		// (for now?)
 		router.get("/", (req, res) => resJson(res, status.SUC));
 
-		// TODO: Implement authentication for
-		// more secure connection over WAN
-		router.get("/auth", (req, res) => {
-			resJson(res, status.ERR, "Not implemented");
+		// Authenticate the user if they don't have a token
+		router.post("/login", (req, res) => {
+			if (!req.body.username || !req.body.password) {
+				return resJson(res, status.ERR,
+				               "Both username and password required");
+			}
+			const username = req.body.username;
+			const password = req.body.password;
+
+			let genToken = (user) => {
+				let values = Object.assign({}, user);
+				values.token = hat();
+				values.token_expiry = Date.now() + 604800000;
+
+				users
+				.update(user, values)
+				.then(done => {
+					resJson(res, status.SUC, values.token);
+				})
+				.catch(routeError(res));
+			};
+
+			users
+			.findOne({username: username})
+			.then(user => {
+				if (user != null) {
+					bcrypt.compare(password, user.password, (err, result) => {
+						if (result === true) {
+							genToken(user);
+						} else {
+							resJson(res, status.ERR, "Password incorrect");
+						}
+					})
+				} else {
+					resJson(res, status.ERR, "User does not exist");
+				}
+			})
+			.catch(routeError(res));
+		});
+
+		router.route("/users")
+		// Temporarily listing all users
+		.get((req, res) => {
+			users
+			.find({})
+			.then(users => {
+				if (!users || users.length == 0) {
+					resJson(res, status.ERR, "No users found");
+				} else {
+					resJson(res, status.SUC, users);
+				}
+			})
+			.catch(routeError(res));
+		})
+		.post((req, res) => {
+			if (!req.body.username || !req.body.password) {
+				return resJson(res, status.ERR,
+				               "Both username and password required");
+			}
+
+			const username = req.body.username;
+			const password = req.body.password;
+
+			users
+			.findOne({username: username})
+			.then(user => {
+				if (user == null) {
+					genPassword();
+				} else {
+					resJson(res, status.ERR, "User already exists");
+				}
+			})
+			.catch(routeError(res));
+
+			let genPassword = () => {
+				let salt = bcrypt.genSalt(cf.SALTROUNDS, (err, salt) => {
+					if (err) routeError(res)(err);
+					let hash = bcrypt.hash(password,
+					                       salt,
+					                       null,
+					                       (err, pass) => {
+						if (err) routeError(res)(err);
+						let values = {
+							username: username,
+							password: pass,
+							token: "",
+							token_expiry: ""
+						}
+						users
+						.insert(values)
+						.then(done => resJson(res, status.SUC, done))
+						.catch(routeError(res));
+					});
+				});
+			};
 		});
 
 		// Retrieve a list of modules and print them in an array
@@ -83,10 +205,9 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 
 			let state = req.body.state;
 			if (state === undefined ||
-				(state !== "" && mod_state.indexOf(state) == -1)
+			   (state !== "" && mod_state.indexOf(state) == -1)
 			) {
-				resJson(res, status.ERR, `Invalid State: '${state}'`);
-				return;
+				return resJson(res, status.ERR, `Invalid State: '${state}'`);
 			}
 
 			let values = {
@@ -133,8 +254,9 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 			.catch(routeError(res));
 		});
 
-		// Run the server directly at root
-		app.use("/", router);
+		// Run the server through the /api
+		// eg. /api/modules
+		app.use("/api/", router);
 
 		// Listen at the specified URL and port,
 		// and print to the console when it's ready
@@ -150,7 +272,7 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 // Returns the specified object to the user,
 // With the time included
 function resJson(res, status, obj) {
-	res.json( { time: timeNow(), status: status, data: obj } );
+	return res.json( { time: timeNow(), status: status, data: obj } );
 }
 
 function routeError(res) {
