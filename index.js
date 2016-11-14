@@ -127,19 +127,6 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 		});
 
 		router.route("/users")
-		// Temporarily listing all users
-		.get((req, res) => {
-			users
-			.find({})
-			.then(users => {
-				if (!users || users.length == 0) {
-					resJson(res, status.ERR, "No users found");
-				} else {
-					resJson(res, status.SUC, users);
-				}
-			})
-			.catch(routeError(res));
-		})
 		.post((req, res) => {
 			if (!req.body.username || !req.body.password) {
 				return resJson(res, status.ERR,
