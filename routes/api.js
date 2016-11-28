@@ -31,8 +31,35 @@ module.exports = (db, cf) => {
 	let mod = db.get("modules");
 	let users = db.get("users");
 
+	router.use(/\/(modules|auth)/, (req, res, next) => {
+		if (req.method != "PUT") {
+			// Authenticate after every request
+			if (req.headers.authorization) {
+				const encoded = req.headers.authorization.split(' ')[1];
+				const decoded = new Buffer(encoded, 'base64')
+				                  .toString('utf8')
+				                  .split(":");
+				users
+				.findOne({username: decoded[0], token: decoded[1]})
+				.then(user => {
+					if (user !== null && user.token_expiry > Date.now()) {
+						next();
+					} else {
+						resJson(res, status.ERR, "Authentication failed");
+					}
+				})
+				.catch(routeError(res));
+			} else {
+				resJson(res, status.ERR, "Authentication required");
+			}
+		} else {
+			next();
+		}
+	});
+
 	// When the homepage is requested just print it was successful
 	router.get("/", (req, res) => resJson(res, status.SUC));
+	router.get("/auth", (req, res) => resJson(res, status.SUC));
 
 	// Authenticate the user if they don't have a token
 	router.post("/login", (req, res) => {
@@ -123,30 +150,7 @@ module.exports = (db, cf) => {
 	// Keep the modules db up to date after every request to the modules route
 	router.use("/modules", (req, res, next) => {
 		mod = db.get("modules");
-
-		if (req.method != "PUT") {
-			// Authenticate after every request
-			if (req.headers.authorization) {
-				const encoded = req.headers.authorization.split(' ')[1];
-				let decoded = new Buffer(encoded, 'base64')
-				                  .toString('utf8')
-				                  .split(":");
-				users
-				.findOne({username: decoded[0], token: decoded[1]})
-				.then(user => {
-					if (user !== null && user.token_expiry > Date.now()) {
-						next();
-					} else {
-						resJson(res, status.ERR, "Authentication failed");
-					}
-				})
-				.catch(routeError(res));
-			} else {
-				resJson(res, status.ERR, "Authentication required");
-			}
-		} else {
-			next();
-		}
+		next();
 	});
 
 	// Retrieve a list of modules and print them in an array

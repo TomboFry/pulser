@@ -20,7 +20,7 @@ text=$2
 value=$3
 state=$4
 
-res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" http://$url/modules/$module | cat)
+res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" http://$url/api/modules/$module | cat)
 
 status=$($res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
 
