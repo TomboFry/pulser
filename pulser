@@ -22,7 +22,7 @@ state=$4
 
 res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" http://$url/api/modules/$module | cat)
 
-status=$($res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
+status=$(echo $res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
 
 if [[ $status == "success" ]]; then
 	exit 0

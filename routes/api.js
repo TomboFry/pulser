@@ -180,7 +180,7 @@ module.exports = (db, cf) => {
 			return resJson(res, status.ERR, `Invalid State: '${state}'`);
 		}
 		let value = req.body.value;
-		if (value !== undefined && ((Number(parseFloat(value)) != value) || (value < 0 || value > 100))) {
+		if (value !== undefined && value !== "" && ((Number(parseFloat(value)) != value) || (value < 0 || value > 100))) {
 			return resJson(res, status.ERR, `Invalid or out of range value: '${value}'`);
 		}
 
