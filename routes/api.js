@@ -1,4 +1,4 @@
-module.exports = (db, cf) => {
+module.exports = (db, cf, io) => {
 	/*** REQUIREMENTS ***/
 
 	// Require bcrypt to hash passwords and authenticate users
@@ -180,16 +180,22 @@ module.exports = (db, cf) => {
 			return resJson(res, status.ERR, `Invalid State: '${state}'`);
 		}
 		let value = req.body.value;
-		if (value !== undefined && value !== "" && ((Number(parseFloat(value)) != value) || (value < 0 || value > 100))) {
-			return resJson(res, status.ERR, `Invalid or out of range value: '${value}'`);
+		if (value !== undefined && value !== "" &&
+		   ((Number(parseFloat(value)) != value) ||
+		    (value < 0 || value > 100))) {
+			return resJson(res, status.ERR,
+			               `Invalid or out of range value: '${value}'`);
 		}
 
 		let values = {
 			name: req.params.name,
 			text: req.body.text || "",
 			value: value || "",
-			state: state || mod_state[0]
+			state: state || mod_state[0],
+			timestamp: Math.round(Date.now() / 1000)
 		};
+
+		io.emit("module-update", values);
 
 		mod
 		.findOne(query)

@@ -1,7 +1,11 @@
 /*** REQUIREMENTS ***/
 
 // Routing and returning a response
-const express = require("express");
+const app = require("express")();
+
+const http = require("http").Server(app);
+
+const io = require("socket.io")(http);
 
 // Parses the body of a HTTP request/response
 const bodyParser = require("body-parser");
@@ -20,31 +24,30 @@ const cf = require("./config");
 
 // Connect to the mongodb server
 monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
-	// Once it's done that successfully, only then can we continue
-	.then(db => {
-		// Set up express and bodyparser
-		const app = express();
-		app.use (bodyParser.urlencoded( { extended: true } ));
-		app.use (bodyParser.json());
-		app.use (morgan("dev"));
+// Once it's done that successfully, only then can we continue
+.then(db => {
+	// Set up express and bodyparser
+	app.use (bodyParser.urlencoded( { extended: true } ));
+	app.use (bodyParser.json());
+	app.use (morgan("common"));
 
-		// Configure express for use with EJS
-		app.set ("view engine", "ejs");
+	// Configure express for use with EJS
+	app.set ("view engine", "ejs");
 
-		// Get both routes, one for the UI, and one for the API
-		let api = require("./routes/api")(db, cf);
-		let gui = require("./routes/gui")(db);
+	// Get both routes, one for the UI, and one for the API
+	let api = require("./routes/api")(db, cf, io);
+	let gui = require("./routes/gui")(db);
 
-		// Run the server through the /api
-		// eg. /api/modules
-		app.use("/api/", api);
-		app.use("/",     gui);
+	// Run the server through the /api
+	// eg. /api/modules
+	app.use("/api/", api);
+	app.use("/",     gui);
 
-		// Listen at the specified URL and port,
-		// and print to the console when it's ready
-		app.listen(cf.SPORT, cf.SURL, () => {
-			console.log(`Listening at http://${cf.SURL}:${cf.SPORT}/`);
-		});
-	})
-	// If the server could not connect to mongo, print the error message.
-	.catch(err => console.log(err.message));
+	// Listen at the specified URL and port,
+	// and print to the console when it's ready
+	http.listen(cf.SPORT, cf.SURL, () => {
+		console.log(`Listening at http://${cf.SURL}:${cf.SPORT}/`);
+	});
+})
+// If the server could not connect to mongo, print the error message.
+.catch(err => console.log(err.message));
