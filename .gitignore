@@ -1,5 +1,6 @@
 node_modules/
 npm-debug.log
 .DS_Store
+._*
 pulser-ios-swift2-xcode/Pulser.xcodeproj/project.xcworkspace/
 pulser-ios-swift2-xcode/Pulser.xcodeproj/xcuserdata/

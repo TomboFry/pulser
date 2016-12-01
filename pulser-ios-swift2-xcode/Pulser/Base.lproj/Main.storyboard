@@ -87,11 +87,13 @@
                     <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
                     <navigationItem key="navigationItem" title="Updates" id="qpK-yF-soR">
                         <barButtonItem key="leftBarButtonItem" title="Logout" id="fa3-Jh-cQ9">
+                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             <connections>
                                 <action selector="logoutBtn:" destination="CCg-iO-ys5" id="R1V-bQ-UfJ"/>
                             </connections>
                         </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" title="Settings" id="gPk-IO-zF8">
+                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             <connections>
                                 <action selector="settingsBtn:" destination="CCg-iO-ys5" id="5Nb-5e-C6j"/>
                             </connections>
@@ -107,7 +109,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zvF-3W-0iQ" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="418" y="793"/>
+            <point key="canvasLocation" x="371" y="793"/>
         </scene>
         <!--Login-->
         <scene sceneID="4QU-Nm-ysF">
@@ -127,7 +129,7 @@
                                     <constraint firstAttribute="height" constant="64" id="3OT-hv-JAq"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
-                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <stackView opaque="NO" contentMode="scaleToFill" placeholderIntrinsicWidth="560" placeholderIntrinsicHeight="200" axis="vertical" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" id="yAl-FX-0ck">
@@ -150,14 +152,18 @@
                                     </textField>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Zhm-Zh-bw7">
                                         <rect key="frame" x="0.0" y="138" width="560" height="30"/>
-                                        <state key="normal" title="Login"/>
+                                        <state key="normal" title="Login">
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                        </state>
                                         <connections>
                                             <action selector="loginBtn:" destination="mHT-Vd-x36" eventType="touchUpInside" id="qCU-yV-NM9"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eVI-tc-h2w">
                                         <rect key="frame" x="0.0" y="184" width="560" height="30"/>
-                                        <state key="normal" title="Register"/>
+                                        <state key="normal" title="Register">
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                                        </state>
                                         <connections>
                                             <action selector="registerBtn:" destination="mHT-Vd-x36" eventType="touchUpInside" id="Rnt-eS-vSU"/>
                                         </connections>
@@ -175,7 +181,7 @@
                                 </subviews>
                             </stackView>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="0.94455397129058838" green="0.022793054580688477" blue="0.15509310364723206" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="yAl-FX-0ck" firstAttribute="top" secondItem="En5-H6-fOi" secondAttribute="bottom" constant="8" symbolic="YES" id="Azz-UJ-OOj"/>
                             <constraint firstItem="yAl-FX-0ck" firstAttribute="trailing" secondItem="En5-H6-fOi" secondAttribute="trailing" id="FjK-ZC-ECz"/>
@@ -205,9 +211,13 @@
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Iwm-ty-Jq7" sceneMemberID="viewController">
                     <toolbarItems/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="UWA-sM-9g1">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" barStyle="black" id="UWA-sM-9g1">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <color key="barTintColor" red="0.94455397129058838" green="0.022793054580688477" blue="0.15509310364723206" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <textAttributes key="titleTextAttributes">
+                            <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        </textAttributes>
                     </navigationBar>
                     <nil name="viewControllers"/>
                     <connections>

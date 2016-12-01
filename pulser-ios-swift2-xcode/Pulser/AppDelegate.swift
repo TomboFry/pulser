@@ -45,10 +45,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 	
 	func application(application: UIApplication, didReceiveLocalNotification notification: UILocalNotification) {
 		if application.applicationState == .Active {
-			print ("Received notification from within app")
+			//print ("Received notification from within app")
 			application.cancelLocalNotification(notification)
+			application.applicationIconBadgeNumber = 0
 		} else {
-			print ("Received notification outside app")
+			//print ("Received notification outside app")
 		}
 	}
 

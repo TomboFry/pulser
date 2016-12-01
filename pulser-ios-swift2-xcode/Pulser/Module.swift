@@ -15,13 +15,20 @@ class Module {
 	var text: String
 	var value: Float
 	var state: String
+	var timestamp: Int
 	var image: UIImage
 	
+	internal func state(state: String){
+		self.state = state
+		self.image = UIImage(named: "state_" + self.state)!
+	}
+	
 	// MARK: Initialization
-	init ?(name: String, text: String, value: Float!, state: String) {
+	init ?(name: String, text: String, value: Float!, state: String, timestamp: Int) {
 		self.name = name
 		self.text = text
 		self.state = state
+		self.timestamp = timestamp
 		
 		if name.isEmpty {
 			return nil

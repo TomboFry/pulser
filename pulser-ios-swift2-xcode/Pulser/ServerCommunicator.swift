@@ -10,12 +10,11 @@ import Foundation
 
 public typealias ServiceResponse = (JSON, NSError?) -> Void
 
-public class ServerCommunicator : NSObject {
+class ServerCommunicator : NSObject {
 	
 	// The fields needed to connect to the pulser server
-	var server_url = "", server_username = "", server_token = "", refresh_time = 0
-	
-	var parent: ModuleTableViewController? = nil
+	var server_url = "", server_username = "", refresh_time = 0
+	private var server_token = ""
 	
 	deinit { //Not needed for iOS9 and above. ARC deals with the observer.
 		NSNotificationCenter.defaultCenter().removeObserver(self)
@@ -39,10 +38,6 @@ public class ServerCommunicator : NSObject {
 			selector: #selector(ServerCommunicator.updatePrefs),
 			name: NSUserDefaultsDidChangeNotification,
 			object: nil)
-		
-		//if mtvc != nil {
-		//	self.parent = mtvc
-		//}
 	}
 	
 	// Updates the fields
@@ -59,12 +54,12 @@ public class ServerCommunicator : NSObject {
 		}
 		
 		self.refresh_time = NSUserDefaults.standardUserDefaults().integerForKey("update_freq_preference")
-		//ModuleTableViewController.updateTimer(parent!)
+		
 		print("Preferences updated: \(self.server_url), \(self.server_token), \(self.refresh_time)")
 	}
 	
 	// Make a call to the node API
-	public func makeRequest(path: String, method: String, body: JSON?, onCompletion: ServiceResponse) {
+	internal func makeRequest(path: String, method: String, body: JSON?, onCompletion: ServiceResponse) {
 		
 		// Format the url as such: http://ipaddress/path
 		let path_format = path.stringByReplacingOccurrencesOfString(" ", withString: "%20")
@@ -119,7 +114,7 @@ public class ServerCommunicator : NSObject {
 		task.resume()
 	}
 	
-	public func cancelRequest() {
+	internal func cancelRequest() {
 		session.invalidateAndCancel()
 		print("Request cancelled")
 	}

@@ -12,10 +12,16 @@ class ModuleTableViewController: UITableViewController {
 	
 	@IBOutlet var refresher: UIRefreshControl!
 	
+	deinit { //Not needed for iOS9 and above. ARC deals with the observer.
+		NSNotificationCenter.defaultCenter().removeObserver(self)
+	}
+	
 	// An array of modules that contain the information required to display
 	var modules = [Module]()
 	var modules_previous = [Module]()
-	var notification_previous: UILocalNotification? = nil
+	
+	var io: SocketIOClient?
+	
 	// Access the App Delegate for a shared ServerController class between View Controllers
 	let del = UIApplication.sharedApplication().delegate as! AppDelegate
 	// Used to keep track of the module we're about to delete
@@ -34,13 +40,74 @@ class ModuleTableViewController: UITableViewController {
 		self.refresher.attributedTitle = NSAttributedString(string: "Pull to refresh")
 		self.refresher.addTarget(self, action: #selector(ModuleTableViewController.handleRefresh(_:)), forControlEvents: UIControlEvents.ValueChanged)
 		
-		// Update the module list on startup
-		self.refresher.beginRefreshing()
-		getData(self.refresher)
+		let appDefaults = [String:AnyObject]()
+		NSUserDefaults.standardUserDefaults().registerDefaults(appDefaults)
+		
+		// Create an observer so that the fields are updated automatically as they are changed
+		NSNotificationCenter.defaultCenter().addObserver(self,
+		                                                 selector: #selector(ModuleTableViewController.updateTimer),
+		                                                 name: NSUserDefaultsDidChangeNotification,
+		                                                 object: nil)
 		
 		// Create a timer to automatically refresh the database every
 		// number of minutes the user it set to
 		updateTimer()
+		
+	}
+	
+	func socketConnect() {
+		io = SocketIOClient(socketURL: NSURL(string: "http://\(del.api.server_url)")!)
+		
+		io!.on("module-update") { (data, ack) in
+			let name = data[0].valueForKey("name") as! String
+			let value = (data[0].valueForKey("value") as? NSString)!.floatValue
+			let text = data[0].valueForKey("text") as! String
+			let state = data[0].valueForKey("state") as! String
+			let timestamp = data[0].valueForKey("timestamp") as! Int
+			
+			//print ("New Values: \(name); \(value); \(text); \(state); \(timestamp)")
+			
+			var existing = false
+			var made_change = false
+			for (mod) in self.modules {
+				if mod.name == name {
+					existing = true
+					//print ("Old Values: \(mod.name); \(mod.value); \(mod.text); \(mod.state); \(mod.timestamp)")
+					if mod.state != state || mod.text != text || mod.value != value {
+						mod.state(state)
+						mod.text = text
+						mod.value = value
+						mod.timestamp = timestamp
+						made_change = true
+					}
+				}
+			}
+			if existing == false {
+				self.modules += [Module(name: name, text: text, value: value, state: state, timestamp: timestamp)!]
+			}
+			if existing == false || (existing == true && made_change == true) {
+				self.createNotification("\(name): \(text) (\(value)%% - \(state))\n", badge: 1);
+			}
+			
+			// Once the data has been retrieved
+			// Asychronously update/reload the table view to reflect the changes
+			dispatch_async(dispatch_get_main_queue(), {
+				self.reloadTable()
+			})
+			
+		}
+		
+		//io!.onAny { (evt) in
+		//	print (evt)
+		//}
+		
+		io!.connect()
+	}
+	
+	func socketDisconnect() {
+		if io != nil {
+			io!.disconnect()
+		}
 	}
 	
 	// When the table view is refreshed get the data with the refresh control passed in
@@ -50,14 +117,28 @@ class ModuleTableViewController: UITableViewController {
 	
 	internal func updateTimer() {
 		if del.api.refresh_time > 0 {
+			// Invalidate all existing refreshing methods
 			SwiftTimer.invalidate()
+			socketDisconnect()
 			
+			// Create a new timer
 			SwiftTimer = NSTimer.scheduledTimerWithTimeInterval(Double(del.api.refresh_time) * 60, target:self, selector: #selector(ModuleTableViewController.handleTimerUpdate), userInfo: nil, repeats: true)
 		} else if del.api.refresh_time == -1 {
-			// Push notifications
+			// Invalidate the existing timer
 			SwiftTimer.invalidate()
+			
+			// Connect to the websocket
+			socketConnect()
+		} else {
+			// If we have notifications turned off, invalidate both.
+			SwiftTimer.invalidate()
+			socketDisconnect()
 		}
+		
+		refreshControl?.beginRefreshing()
+		getData(refreshControl)
 	}
+	
 	func handleTimerUpdate(timer: NSTimer){
 		getData()
 	}
@@ -65,6 +146,7 @@ class ModuleTableViewController: UITableViewController {
 	// Gets the module data from the Node server and adds the relevant table cells
 	func getData(refreshControl: UIRefreshControl? = nil) {
 		print("Getting new data...")
+		print (NSDate.init(timeIntervalSinceNow: 0))
 		
 		// Reset the list of modules, so we don't just add more
 		self.modules_previous = self.modules
@@ -74,7 +156,6 @@ class ModuleTableViewController: UITableViewController {
 		del.api.makeRequest("/modules", method: "GET", body: nil) { (data, err) in
 			// Asynchronously update the UI, disabling the refresh control
 			dispatch_async(dispatch_get_main_queue(), {
-				print("Turning off refresher")
 				if refreshControl != nil {
 					refreshControl?.endRefreshing()
 				}
@@ -91,9 +172,10 @@ class ModuleTableViewController: UITableViewController {
 					let text = element.1["text"].stringValue
 					let value = element.1["value"].floatValue
 					let state = element.1["state"].stringValue
+					let timestamp = element.1["timestamp"].intValue
 					print("Values: ", name, text, value, state)
 					// Create a module with this information
-					let mod = Module(name: name, text: text, value: value, state: state)!
+					let mod = Module(name: name, text: text, value: value, state: state, timestamp: timestamp)!
 					// and add it to the array of modules
 					self.modules += [mod]
 				}
@@ -108,33 +190,38 @@ class ModuleTableViewController: UITableViewController {
 						}
 					}
 					if !same {
-						notification_body += "\(mod.name): \(mod.text) (\(mod.value)%%)\n"
+						notification_body += "\(mod.name): \(mod.text) (\(mod.value)%% - \(mod.state))\n"
 						module_diff += [mod]
 					}
 				}
 				
 				if module_diff.count > 0 {
-					let localNotification = UILocalNotification()
-					localNotification.fireDate = NSDate(timeIntervalSinceNow: 1)
-					localNotification.alertBody = notification_body
-					localNotification.applicationIconBadgeNumber = module_diff.count
-					
-					if self.notification_previous != nil {
-						//UIApplication.sharedApplication().cancelLocalNotification(self.notification_previous!)
-					}
-					UIApplication.sharedApplication().scheduleLocalNotification(localNotification)
-					
-					self.notification_previous = localNotification
+					self.createNotification(notification_body, badge: module_diff.count);
 				}
 				
-				// Once the data has been retrieved
-				// Asychronously update/reload the table view to reflect the changes
 				dispatch_async(dispatch_get_main_queue(), {
-					print("Updating tables")
-					self.tableView.reloadData()
+					self.reloadTable()
 				})
 			}
 		}
+	}
+	
+	func reloadTable() {
+		// Sort the modules by timestamp, so the most recent always appears at the top
+		modules.sortInPlace({ $0.timestamp > $1.timestamp })
+		
+		// Once the data has been retrieved
+		// Asychronously update/reload the table view to reflect the changes
+		self.tableView.reloadData()
+	}
+	
+	func createNotification(body: String, badge: Int) {
+		let localNotification = UILocalNotification()
+		localNotification.fireDate = NSDate(timeIntervalSinceNow: 1)
+		localNotification.alertBody = body
+		localNotification.applicationIconBadgeNumber += badge
+		
+		UIApplication.sharedApplication().scheduleLocalNotification(localNotification)
 	}
 	
 	func gotoSettings() {
@@ -154,6 +241,17 @@ class ModuleTableViewController: UITableViewController {
 			// Add the settings button and a cancel button that just closes the window
 			alert.addAction(settingsAction)
 			alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
+			
+			// Display the alert
+			self.presentViewController(alert, animated: true, completion: nil)
+		})
+	}
+	
+	func popup(title: String, message: String) {
+		dispatch_async(dispatch_get_main_queue(), {
+			// Create an alert controller
+			let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.Alert)
+			alert.addAction(UIAlertAction(title: "Okay", style: .Cancel, handler: nil))
 			
 			// Display the alert
 			self.presentViewController(alert, animated: true, completion: nil)
@@ -192,7 +290,7 @@ class ModuleTableViewController: UITableViewController {
 						self.tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
 						self.deleteModuleIndexPath = nil
 						self.tableView.endUpdates()
-						self.tableView.reloadData()
+						self.reloadTable()
 					})
 				}
 			})
