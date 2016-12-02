@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Users</title>
+	<% include ../partials/head %>
+	<% include ../partials/head-users %>
+</head>
+<body>
+	<% include ../partials/nav %>
+	<div class="container">
+		<a href="#" onclick="newUser();" class="btn">+</a>
+		<h1>Users</h1>
+		<% users.forEach((user) => { %>
+		<div class="module">
+			<div class="mod-content">
+				<h3 class="mod-name"><%= user.username %></h3>
+				<p class="mod-text">
+					Password: <%= user.password %><br/>
+					Token: <%= user.token %><br/>
+					Token Expiry: <%= new Date(user.token_expiry) %><br/>
+				</p>
+			</div>
+			<div class="mod-cover"></div>
+		</div>
+		<% }) %>
+	</div>
+	<div id="modal">
+		<div id="modal-cover"></div>
+		<div id="modal-container">
+			<a href="#" onclick="closeModal();" id="modal_btn-close">✖</a>
+			<h2 id="modal-title">New User</h2>
+			<form id="frm_new-user">
+				<label for="username">Username:</label>
+				<input type="text" id="username" name="username"><br/>
+				<label for="password">Password:</label>
+				<input type="password" id="password" name="password"><br/>
+				<label for="password_confirm">Confirm Password:</label>
+				<input type="password" id="password_confirm" name="password_confirm"><br/>
+				<input type="submit" value="Add" onsubmit="submitUser();">
+				<input type="button" value="Cancel" onsubmit="closeModal();">
+				<input type="button" value="Delete" onsubmit="deleteUser();">
+			</form>
+		</div>
+	</div>
+	<script>
+		function newUser() {
+			var body = document.getElementsByTagName('body')[0];
+			body.classList.add("show-modal");
+		}
+		function submitUser() {
+			var username = document.getElementById('username').value;
+			var password = document.getElementById('password').value;
+			var password_confirm = document.getElementById('password_confirm').value;
+
+			return false;
+		}
+		function closeModal() {
+			var username = document.getElementById('username');
+			var password = document.getElementById('password');
+			var password_confirm = document.getElementById('password_confirm');
+			username.value = "";
+			password.value = "";
+			password_confirm.value = "";
+
+			var modal = document.getElementById('modal');
+			modal.classList.add("closing");
+
+			setTimeout(function() {
+				modal.classList.remove("closing");
+
+				var body = document.getElementsByTagName('body')[0];
+				body.classList.remove("show-modal");
+			}, 200);
+		}
+	</script>
+</body>
+</html>

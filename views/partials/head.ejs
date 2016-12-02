@@ -8,16 +8,24 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
-body {
+body, input, textarea {
 	font-family: "Helvetica Neue", Helvetica, sans-serif;
+}
+body {
 	background-color: #2196f3;
+	color: #fff;
+}
+a {
+	text-decoration: none;
+}
+p {
+	margin-bottom: 16px;
 }
 h1, h2, h3, h4, h5, h6 { font-weight: 300; }
 h1 {
 	font-size: 48pt;
 	font-weight: 100;
 	padding: 0 16px 24px;
-	color: #fff;
 }
 h2 { font-size: 32pt; }
 h3 { font-size: 26pt; }
@@ -134,5 +142,24 @@ h6 { font-size: 16pt; }
 }
 .module:active .mod-cover {
 	background-color: #aaa;
+}
+#nav {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+}
+#nav a {
+	background-color: #fff;
+	border-radius: 6px;
+	padding: 10px 12px;
+	display: inline-block;
+	text-decoration: none;
+	color: #2196f3;
+	font-weight: 700;
+	border: 1px solid #fff;
+}
+#nav a:hover {
+	background-color: #2196f3;
+	color: #fff;
 }
 </style>

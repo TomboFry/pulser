@@ -15,17 +15,27 @@ module.exports = (db) => {
 	let mod = db.get("modules");
 	let users = db.get("users");
 
-	// And keep them up to date after every request
+	// Display the index page at root
 	router.get("/", (req, res) => {
 		res.render("pages/index");
 	});
 
-	// And keep them up to date after every request
+	// Display a list of all modules
 	router.get("/modules", (req, res) => {
 		mod
 		.find()
 		.then(modules => {
 			res.render("pages/modules", {modules: modules});
+		})
+		.catch(resError(res));
+	});
+
+	// Display a list of all users
+	router.get("/users", (req, res) => {
+		users
+		.find()
+		.then(users => {
+			res.render("pages/users", {users: users});
 		})
 		.catch(resError(res));
 	});

@@ -19,8 +19,9 @@ module=$1
 text=$2
 value=$3
 state=$4
+urgency=$5
 
-res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" http://$url/api/modules/$module | cat)
+res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" -d urgency="$urgency" http://$url/api/modules/$module | cat)
 
 status=$(echo $res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
 

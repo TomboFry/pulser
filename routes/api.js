@@ -18,6 +18,11 @@ module.exports = (db, cf, io) => {
 		"created", "progress", "ongoing", "finished", "failed"
 	];
 
+	// A list of possible urgencies for a module to have
+	const mod_urgency = [
+		"low", "med", "high"
+	];
+
 	// Routing and returning a response
 	const express = require("express");
 
@@ -101,8 +106,7 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
-	router.route("/users")
-	.post((req, res) => {
+	router.post("/users", (req, res) => {
 		users = db.get("users");
 		if (!req.body.username || !req.body.password) {
 			return resJson(res, status.ERR,
@@ -112,17 +116,11 @@ module.exports = (db, cf, io) => {
 		const username = req.body.username;
 		const password = req.body.password;
 
-		let genPassword = () => {
-			bcrypt.genSalt(cf.SALTROUNDS, (err, salt) => {
-				if (err) routeError(res)(err);
-				bcrypt.hash(password, salt, null, (err, pass) => {
-					if (err) routeError(res)(err);
-					let values = {
-						username: username,
-						password: pass,
-						token: "",
-						token_expiry: ""
-					}
+		users
+		.findOne({username: username})
+		.then(user => {
+			if (user == null) {
+				genPassword(password, values => {
 					users
 					.insert(values)
 					.then(done => {
@@ -131,14 +129,6 @@ module.exports = (db, cf, io) => {
 					})
 					.catch(routeError(res));
 				});
-			});
-		};
-
-		users
-		.findOne({username: username})
-		.then(user => {
-			if (user == null) {
-				genPassword();
 			} else {
 				resJson(res, status.ERR, "User already exists");
 			}
@@ -146,6 +136,29 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
+	router.put("/users/:username", (req, res) => {
+		resJson(res, status.ERR, "Not fully implemented");
+
+		const password = req.body.password;
+		const password_confirm = req.body.password_confirm;
+
+		if (!password || !password_confirm) {
+			resJson(res, status.ERR, "Passwords must be filled in");
+		} else if (password !== password_confirm) {
+			resJson(res, status.ERR, "Passwords must match");
+		}
+
+		users
+		.findOne({ username: req.params.username })
+		.then(user => {
+			if (user != null) {
+				// TODO: Generate new password
+				//genPassword()
+			} else {
+				resJson(res, status.ERR, "User does not exist");
+			}
+		})
+	});
 
 	// Keep the modules db up to date after every request to the modules route
 	router.use("/modules", (req, res, next) => {
@@ -179,6 +192,7 @@ module.exports = (db, cf, io) => {
 		) {
 			return resJson(res, status.ERR, `Invalid State: '${state}'`);
 		}
+
 		let value = req.body.value;
 		if (value !== undefined && value !== "" &&
 		   ((Number(parseFloat(value)) != value) ||
@@ -187,11 +201,19 @@ module.exports = (db, cf, io) => {
 			               `Invalid or out of range value: '${value}'`);
 		}
 
+		let urgency = req.body.urgency;
+		if (urgency === undefined ||
+		   (urgency !== "" && mod_urgency.indexOf(urgency) == -1)
+		) {
+			return resJson(res, status.ERR, `Invalid Urgency: '${state}'`);
+		}
+
 		let values = {
 			name: req.params.name,
 			text: req.body.text || "",
 			value: value || "",
 			state: state || mod_state[0],
+			urgency: urgency || mod_urgency[0],
 			timestamp: Math.round(Date.now() / 1000)
 		};
 
@@ -243,6 +265,22 @@ module.exports = (db, cf, io) => {
 // With the time included
 function resJson(res, status, obj) {
 	return res.json( { time: timeNow(), status: status, data: obj } );
+}
+
+function genPassword(password, callback) {
+	bcrypt.genSalt(cf.SALTROUNDS, (err, salt) => {
+		if (err) routeError(res)(err);
+		bcrypt.hash(password, salt, null, (err, pass) => {
+			if (err) routeError(res)(err);
+			let values = {
+				username: username,
+				password: pass,
+				token: "",
+				token_expiry: ""
+			}
+			callback(values);
+		});
+	});
 }
 
 function routeError(res) {

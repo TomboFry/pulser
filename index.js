@@ -1,7 +1,8 @@
 /*** REQUIREMENTS ***/
 
 // Routing and returning a response
-const app = require("express")();
+const express = require("express");
+const app = express();
 
 const http = require("http").Server(app);
 
@@ -31,6 +32,7 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 	app.use (bodyParser.json());
 	app.use (morgan("common"));
 
+
 	// Configure express for use with EJS
 	app.set ("view engine", "ejs");
 
@@ -38,10 +40,10 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 	let api = require("./routes/api")(db, cf, io);
 	let gui = require("./routes/gui")(db);
 
-	// Run the server through the /api
-	// eg. /api/modules
-	app.use("/api/", api);
-	app.use("/",     gui);
+	// Run the server through the specified routes
+	app.use("/static/", express.static("static"));
+	app.use("/api/",   api);
+	app.use("/",       gui);
 
 	// Listen at the specified URL and port,
 	// and print to the console when it's ready
