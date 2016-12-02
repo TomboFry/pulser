@@ -15,6 +15,7 @@ class Module {
 	var text: String
 	var value: Float
 	var state: String
+	var urgency: String
 	var timestamp: Int
 	var image: UIImage
 	
@@ -24,10 +25,11 @@ class Module {
 	}
 	
 	// MARK: Initialization
-	init ?(name: String, text: String, value: Float!, state: String, timestamp: Int) {
+	init ?(name: String, text: String, value: Float!, state: String, urgency: String, timestamp: Int) {
 		self.name = name
 		self.text = text
 		self.state = state
+		self.urgency = urgency
 		self.timestamp = timestamp
 		
 		if name.isEmpty {

@@ -33,15 +33,6 @@
                                         <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="CEN-wP-UmI">
                                             <rect key="frame" x="98" y="80" width="494" height="2"/>
                                         </progressView>
-                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Module Name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Zo0-Fp-rcU">
-                                            <rect key="frame" x="98" y="8" width="494" height="28"/>
-                                            <constraints>
-                                                <constraint firstAttribute="height" constant="28" id="9nb-3L-yHc"/>
-                                            </constraints>
-                                            <fontDescription key="fontDescription" type="system" pointSize="23"/>
-                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                            <nil key="highlightedColor"/>
-                                        </label>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Module Description" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AP7-hD-qDn">
                                             <rect key="frame" x="98" y="35" width="494" height="37"/>
                                             <constraints>
@@ -51,19 +42,40 @@
                                             <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                             <nil key="highlightedColor"/>
                                         </label>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="low" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="D4e-lu-vzE">
+                                            <rect key="frame" x="537" y="8" width="55" height="28"/>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="28" id="2Te-cX-lsB"/>
+                                                <constraint firstAttribute="width" constant="55" id="c9F-Qf-CqL"/>
+                                            </constraints>
+                                            <fontDescription key="fontDescription" type="italicSystem" pointSize="16"/>
+                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Module Name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Zo0-Fp-rcU">
+                                            <rect key="frame" x="98" y="8" width="440" height="28"/>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="28" id="9nb-3L-yHc"/>
+                                            </constraints>
+                                            <fontDescription key="fontDescription" type="system" pointSize="23"/>
+                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="ixg-7b-Tyb" firstAttribute="leading" secondItem="BT4-a1-1U4" secondAttribute="leading" id="1ot-lh-bnX"/>
                                         <constraint firstItem="CEN-wP-UmI" firstAttribute="top" secondItem="AP7-hD-qDn" secondAttribute="bottom" constant="8" id="6ar-qV-WQf"/>
                                         <constraint firstItem="Zo0-Fp-rcU" firstAttribute="top" secondItem="BT4-a1-1U4" secondAttribute="topMargin" id="Gq2-Ua-5Wq"/>
+                                        <constraint firstItem="D4e-lu-vzE" firstAttribute="top" secondItem="BT4-a1-1U4" secondAttribute="topMargin" id="HAs-rJ-ll8"/>
                                         <constraint firstItem="Zo0-Fp-rcU" firstAttribute="leading" secondItem="ixg-7b-Tyb" secondAttribute="trailing" constant="8" id="IJS-Hp-ja5"/>
                                         <constraint firstItem="ixg-7b-Tyb" firstAttribute="top" secondItem="BT4-a1-1U4" secondAttribute="top" id="ZY2-UM-olh"/>
                                         <constraint firstItem="CEN-wP-UmI" firstAttribute="leading" secondItem="BT4-a1-1U4" secondAttribute="leadingMargin" constant="90" id="fmY-bp-fn0"/>
                                         <constraint firstItem="AP7-hD-qDn" firstAttribute="leading" secondItem="ixg-7b-Tyb" secondAttribute="trailing" constant="8" id="hkG-xj-pCu"/>
                                         <constraint firstItem="CEN-wP-UmI" firstAttribute="bottom" secondItem="BT4-a1-1U4" secondAttribute="bottomMargin" id="hz8-W5-7IZ"/>
+                                        <constraint firstItem="D4e-lu-vzE" firstAttribute="trailing" secondItem="BT4-a1-1U4" secondAttribute="trailingMargin" id="qNw-5c-BFV"/>
                                         <constraint firstItem="CEN-wP-UmI" firstAttribute="trailing" secondItem="BT4-a1-1U4" secondAttribute="trailingMargin" id="rnv-ef-uoC"/>
                                         <constraint firstItem="AP7-hD-qDn" firstAttribute="trailing" secondItem="BT4-a1-1U4" secondAttribute="trailingMargin" id="tcK-RF-iUQ"/>
-                                        <constraint firstItem="Zo0-Fp-rcU" firstAttribute="trailing" secondItem="BT4-a1-1U4" secondAttribute="trailingMargin" id="xvo-kZ-7HD"/>
+                                        <constraint firstAttribute="trailingMargin" secondItem="Zo0-Fp-rcU" secondAttribute="trailing" constant="54" id="uWg-CL-aqT"/>
                                     </constraints>
                                 </tableViewCellContentView>
                                 <accessibility key="accessibilityConfiguration">
@@ -74,6 +86,7 @@
                                     <outlet property="nameLabel" destination="Zo0-Fp-rcU" id="fbE-MO-y8e"/>
                                     <outlet property="stateImage" destination="ixg-7b-Tyb" id="UzZ-4k-tVJ"/>
                                     <outlet property="txtLabel" destination="AP7-hD-qDn" id="vG8-93-vMg"/>
+                                    <outlet property="urgencyLabel" destination="D4e-lu-vzE" id="EFQ-en-tzl"/>
                                     <outlet property="valueProgress" destination="CEN-wP-UmI" id="cNH-tk-HUG"/>
                                 </connections>
                             </tableViewCell>

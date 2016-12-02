@@ -15,6 +15,7 @@ class ModuleTableViewCell: UITableViewCell {
 	@IBOutlet weak var txtLabel: UILabel!
 	@IBOutlet weak var valueProgress: UIProgressView!
 	@IBOutlet weak var stateImage: UIImageView!
+	@IBOutlet weak var urgencyLabel: UILabel!
 
 	override func awakeFromNib() {
 		super.awakeFromNib()

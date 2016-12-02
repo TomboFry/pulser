@@ -27,6 +27,8 @@ class ModuleTableViewController: UITableViewController {
 	// Used to keep track of the module we're about to delete
 	var deleteModuleIndexPath: NSIndexPath? = nil
 	
+	var urgencies = [ "off", "low", "med", "high" ]
+
 	var SwiftTimer: NSTimer = NSTimer()
 	
 	override func viewDidLoad() {
@@ -63,6 +65,7 @@ class ModuleTableViewController: UITableViewController {
 			let value = (data[0].valueForKey("value") as? NSString)!.floatValue
 			let text = data[0].valueForKey("text") as! String
 			let state = data[0].valueForKey("state") as! String
+			let urgency = data[0].valueForKey("urgency") as! String
 			let timestamp = data[0].valueForKey("timestamp") as! Int
 			
 			//print ("New Values: \(name); \(value); \(text); \(state); \(timestamp)")
@@ -73,20 +76,21 @@ class ModuleTableViewController: UITableViewController {
 				if mod.name == name {
 					existing = true
 					//print ("Old Values: \(mod.name); \(mod.value); \(mod.text); \(mod.state); \(mod.timestamp)")
-					if mod.state != state || mod.text != text || mod.value != value {
+					if mod.state != state || mod.text != text || mod.value != value || mod.urgency != urgency {
 						mod.state(state)
 						mod.text = text
 						mod.value = value
 						mod.timestamp = timestamp
+						mod.urgency = urgency
 						made_change = true
 					}
 				}
 			}
 			if existing == false {
-				self.modules += [Module(name: name, text: text, value: value, state: state, timestamp: timestamp)!]
+				self.modules += [Module(name: name, text: text, value: value, state: state, urgency: urgency, timestamp: timestamp)!]
 			}
 			if existing == false || (existing == true && made_change == true) {
-				self.createNotification("\(name): \(text) (\(value)%% - \(state))\n", badge: 1);
+				self.createNotification("\(name): \(text) (\(value)%% - \(state))\n", badge: 1, notification: urgency);
 			}
 			
 			// Once the data has been retrieved
@@ -172,10 +176,11 @@ class ModuleTableViewController: UITableViewController {
 					let text = element.1["text"].stringValue
 					let value = element.1["value"].floatValue
 					let state = element.1["state"].stringValue
+					let urgency = element.1["urgency"].stringValue
 					let timestamp = element.1["timestamp"].intValue
 					print("Values: ", name, text, value, state)
 					// Create a module with this information
-					let mod = Module(name: name, text: text, value: value, state: state, timestamp: timestamp)!
+					let mod = Module(name: name, text: text, value: value, state: state, urgency: urgency, timestamp: timestamp)!
 					// and add it to the array of modules
 					self.modules += [mod]
 				}
@@ -185,7 +190,7 @@ class ModuleTableViewController: UITableViewController {
 				for (mod) in self.modules {
 					var same = false
 					for (mod_prev) in self.modules_previous {
-						if mod.name == mod_prev.name && mod.text == mod_prev.text && mod.state == mod_prev.state && mod.value == mod_prev.value {
+						if mod.name == mod_prev.name && mod.text == mod_prev.text && mod.state == mod_prev.state && mod.value == mod_prev.value && mod.urgency == mod_prev.urgency {
 							same = true
 						}
 					}
@@ -215,13 +220,27 @@ class ModuleTableViewController: UITableViewController {
 		self.tableView.reloadData()
 	}
 	
-	func createNotification(body: String, badge: Int) {
-		let localNotification = UILocalNotification()
-		localNotification.fireDate = NSDate(timeIntervalSinceNow: 1)
-		localNotification.alertBody = body
-		localNotification.applicationIconBadgeNumber += badge
+	func createNotification(body: String, badge: Int, notification: String? = nil) {
+		var urgency = notification
+		if urgency == nil {
+			urgency = "low"
+		}
+		var urg_remote = urgencies.indexOf(urgency!)!
+		let urg_local = urgencies.indexOf(del.api.notification_urgency)!
 		
-		UIApplication.sharedApplication().scheduleLocalNotification(localNotification)
+		if (del.api.refresh_time != -1) {
+			// Hacky fix to make sure all non-push notifications give a notification
+			urg_remote = 9999
+		}
+
+		if urg_remote >= urg_local && urg_local > 0 {
+			let localNotification = UILocalNotification()
+			localNotification.fireDate = NSDate(timeIntervalSinceNow: 1)
+			localNotification.alertBody = body
+			localNotification.applicationIconBadgeNumber += badge
+			
+			UIApplication.sharedApplication().scheduleLocalNotification(localNotification)
+		}
 	}
 	
 	func gotoSettings() {
@@ -340,6 +359,7 @@ class ModuleTableViewController: UITableViewController {
 		cell.nameLabel.text = module.name
 		cell.txtLabel.text = module.text
 		cell.stateImage.image = module.image
+		cell.urgencyLabel.text = module.urgency
 		cell.valueProgress.progress = module.value / 100
 		
 		return cell

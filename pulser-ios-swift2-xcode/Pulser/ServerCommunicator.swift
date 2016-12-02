@@ -13,7 +13,7 @@ public typealias ServiceResponse = (JSON, NSError?) -> Void
 class ServerCommunicator : NSObject {
 	
 	// The fields needed to connect to the pulser server
-	var server_url = "", server_username = "", refresh_time = 0
+	var server_url = "", server_username = "", refresh_time = 0, notification_urgency = "low"
 	private var server_token = ""
 	
 	deinit { //Not needed for iOS9 and above. ARC deals with the observer.
@@ -52,10 +52,13 @@ class ServerCommunicator : NSObject {
 		if let token = NSUserDefaults.standardUserDefaults().stringForKey("login_token") {
 			self.server_token = token
 		}
+		if let urgency = NSUserDefaults.standardUserDefaults().stringForKey("notifications_preference") {
+			self.notification_urgency = urgency
+		}
 		
 		self.refresh_time = NSUserDefaults.standardUserDefaults().integerForKey("update_freq_preference")
 		
-		print("Preferences updated: \(self.server_url), \(self.server_token), \(self.refresh_time)")
+		print("Preferences updated: url-\(self.server_url), token-\(self.server_token), time-\(self.refresh_time), urg-\(self.notification_urgency)")
 	}
 	
 	// Make a call to the node API
