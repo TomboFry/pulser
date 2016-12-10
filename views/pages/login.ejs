@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Pulser</title>
+	<% include ../partials/head %>
+	<script>
+		page = "login";
+	</script>
+</head>
+<body>
+	<div class="container">
+		<h1>Pulser - Login</h1>
+		<form id="login-form">
+			<label for="username">Username: </label>
+			<input type="text" id="username" name="username" placeholder="Username"><br />
+			<label for="password">Password: </label>
+			<input type="password" id="password" name="password" placeholder="Password"><br />
+			<input type="button" value="Login" id="btn_login" onclick="login();">
+			<input type="button" value="Register" id="btn_register" onclick="register();">
+		</form>
+	</div>
+	<script>
+		function login() {
+			var username = document.getElementById('username').value;
+			var password = document.getElementById('password').value;
+			var data = {
+				username: username,
+				password: password
+			};
+			sendRequest("/api/login", "POST", data, function(res) {
+				window.location.reload();
+			})
+		}
+
+		function setCookie(name, value, expiry_days) {
+			var d = new Date();
+			d.setTime(d.getTime() + (expiry_days * 24 * 60 * 60 * 1000));
+			var expires = "expires=" + d.toUTCString();
+			document.cookie = name + "=" + value + ";" + expires + ";";
+		}
+
+		function register() {
+
+		}
+	</script>
+</body>
+</html>

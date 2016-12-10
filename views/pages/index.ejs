@@ -3,11 +3,22 @@
 <head>
 	<title>Pulser</title>
 	<% include ../partials/head %>
+	<script>
+		page = "index";
+	</script>
+	<style>
+	.btn {
+		padding: 16px;
+		font-size: 20pt;
+		width: auto;
+	}
+	</style>
 </head>
 <body>
 	<div class="container">
+		<a href="#" onclick="logout();" class="btn">logout</a>
 		<h1>Pulser</h1>
-		<a href="/modules">
+		<a href="/gui/modules">
 			<div class="module">
 				<div class="mod-content">
 					<h3 class="mod-name">Modules</h3>
@@ -15,7 +26,7 @@
 				<div class="mod-cover"></div>
 			</div>
 		</a>
-		<a href="/users">
+		<a href="/gui/users">
 			<div class="module">
 				<div class="mod-content">
 					<h3 class="mod-name">Users</h3>
@@ -24,5 +35,12 @@
 			</div>
 		</a>
 	</div>
+	<script>
+		function logout() {
+			sendRequest("/api/logout", "POST", undefined, function(res) {
+				window.location.reload();
+			});
+		}
+	</script>
 </body>
 </html>

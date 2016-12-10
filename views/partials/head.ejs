@@ -1,5 +1,22 @@
 <meta charset="UTF-8">
 <style>
+.btn {
+	float: right;
+	border: 1px solid #fff;
+	border-radius: 32px;
+	display: inline-block;
+	padding: 6px;
+	font-size: 32pt;
+	color: #fff;
+	width: 64px;
+	height: 64px;
+	font-weight: 200;
+	text-align: center;
+}
+.btn:hover {
+	background-color: #fff;
+	color: #2196f3;
+}
 * {
 	margin: 0;
 	padding: 0;
@@ -51,7 +68,7 @@ h6 { font-size: 16pt; }
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 	overflow: hidden;
 }
-.mod-value {
+.mod-progress {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -127,7 +144,7 @@ h6 { font-size: 16pt; }
 .module.finished {
 	background-color: #4caf50;
 }
-.module.failed, .module.failed .mod-value {
+.module.failed, .module.failed .mod-progress {
 	background-color: #f44336;
 }
 .module:hover {
@@ -162,4 +179,120 @@ h6 { font-size: 16pt; }
 	background-color: #2196f3;
 	color: #fff;
 }
+
+input {
+	margin-bottom: 16px;
+	padding: 4px;
+}
+#error_message {
+	display: block;
+	margin-bottom: 16px;
+	color: #cc0000;
+}
+#error_message::empty {
+	display: none;
+}
+input.error {
+	border: 2px solid #cc0000;
+}
+input[type="button"].btn_show {
+	display: inline-block;
+}
+input[type="button"].btn_hide {
+	display: none;
+}
 </style>
+<script src="/socket.io/socket.io.js" type="text/javascript"></script>
+<script>
+	var socket = io();
+	socket.on("module-update", function (module) {
+		console.log(module, page);
+		if (page != "login" || page != "error") {
+			notify(module);
+		}
+		if (page == "modules" && module) {
+			var modules = document.getElementsByClassName("module");
+			for (var i = 0; i < modules.length; i++) {
+				if (modules[i].getAttribute("id") == module._id) {
+					var name = modules[i].getElementsByClassName("mod-name")[0].innerText;
+					var text = modules[i].getElementsByClassName("mod-text")[0].innerText;
+					var state = modules[i].getElementByClassName("mod-state")[0].innerText;
+					var value = modules[i].getElementByClassName("mod-value")[0].innerText;
+
+				} else {
+
+				}
+			}
+		}
+	});
+	var page = "index";
+
+	function sendRequest(url, method, data, callback) {
+		var request = new XMLHttpRequest();
+
+		request.open(
+			method,
+			url,
+			true
+		);
+
+		request.onload = function() {
+			if (this.status >= 200 && this.status < 400) {
+				// Success!
+				var data = JSON.parse(this.response);
+				if (data.status == "success") {
+					callback(data);
+				} else {
+					alert("Error:\n" + data.data);
+				}
+			} else {
+				// We reached our target server, but it returned an error
+			}
+		};
+
+		request.onerror = function() {
+			// There was a connection error of some sort
+		};
+
+		request.setRequestHeader('Content-Type', 'application/json');
+		request.setRequestHeader('Authorization', 'Basic ' + btoa(getCookie("username") + ":" + getCookie("token")));
+
+		if (data == undefined) {
+			request.send();
+		} else {
+			request.send(JSON.stringify(data));
+		}
+	}
+
+	function getCookie(name) {
+		name += "=";
+		var cookies = document.cookie.split(';');
+
+		for (var i = 0; i < cookies.length; i++) {
+			var c = cookies[i];
+			while (c.charAt(0) == ' ') {
+				c = c.substring(1);
+			}
+			if (c.indexOf(name) == 0) {
+				return c.substring(name.length, c.length);
+			}
+		}
+		return undefined;
+	}
+
+	function notify(module) {
+		// Let's check if the browser supports notifications
+		if ("Notification" in window) {
+			Notification.requestPermission(function (permission) {
+				if (permission === "granted") {
+					var options = {
+						body: module.text + " (" + module.value + "% - " + module.urgency + " urgency)",
+						icon: "/static/state_" + module.state + ".png"
+					}
+					var notification = new Notification(module.name, options);
+				}
+			});
+		}
+	}
+
+</script>

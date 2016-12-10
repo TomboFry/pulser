@@ -3,21 +3,24 @@
 <head>
 	<title>Modules</title>
 	<% include ../partials/head %>
+	<script>
+		page = "modules";
+	</script>
 </head>
 <body>
 	<% include ../partials/nav %>
 	<div class="container">
 		<h1>Modules</h1>
 		<% modules.forEach((module) => { %>
-		<div class="module <%= module.state %>">
+		<div onclick="deleteModule('<%= module._id %>');" id="<%= module._id %>" class="module <%= module.state %>">
 			<div class="mod-content">
 				<h3 class="mod-name"><%= module.name %></h3>
 				<p class="mod-state">state: <%= module.state %><br/>urgency: <%= module.urgency %></p>
 				<p class="mod-text"><%= module.text %></p>
 				<% if (module.value !== "" && module.value !== 0) { %>
 				<div class="progress-bar">
-					<div class="mod-value" style="width: <%= module.value %>%;">
-						<%= module.value %>%
+					<div class="mod-progress" style="width: <%= module.value %>%;">
+						<span class="mod-value"><%= module.value %></span>%
 						<div class="value-overlay"></div>
 					</div>
 				</div>
@@ -27,12 +30,17 @@
 		</div>
 		<% }) %>
 	</div>
-	<script src="/socket.io/socket.io.js" type="text/javascript"></script>
 	<script>
-		let socket = io();
-		socket.on("module-update", msg => {
-			console.log(msg);
-		});
+		function deleteModule(id) {
+			var elm = document.getElementById(id);
+			var mod_name = elm.getElementsByClassName("mod-name")[0];
+
+			if (confirm("Are you sure you want to delete the module '" + mod_name.innerText + "'?")) {
+				sendRequest("/api/modules/" + mod_name.innerText.replace(" ", "%20"), "DELETE", undefined, function(res) {
+					window.location.reload();
+				});
+			}
+		}
 	</script>
 </body>
 </html>

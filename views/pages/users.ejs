@@ -4,6 +4,9 @@
 	<title>Users</title>
 	<% include ../partials/head %>
 	<% include ../partials/head-users %>
+	<script>
+		page = "users";
+	</script>
 </head>
 <body>
 	<% include ../partials/nav %>
@@ -11,7 +14,7 @@
 		<a href="#" onclick="newUser();" class="btn">+</a>
 		<h1>Users</h1>
 		<% users.forEach((user) => { %>
-		<div class="module">
+		<div class="module" id="<%= user._id %>" onclick="updateUser('<%= user._id %>');">
 			<div class="mod-content">
 				<h3 class="mod-name"><%= user.username %></h3>
 				<p class="mod-text">
@@ -28,7 +31,7 @@
 		<div id="modal-cover"></div>
 		<div id="modal-container">
 			<a href="#" onclick="closeModal();" id="modal_btn-close">✖</a>
-			<h2 id="modal-title">New User</h2>
+			<h2 id="modal-title"></h2>
 			<form id="frm_new-user">
 				<label for="username">Username:</label>
 				<input type="text" id="username" name="username"><br/>
@@ -36,9 +39,11 @@
 				<input type="password" id="password" name="password"><br/>
 				<label for="password_confirm">Confirm Password:</label>
 				<input type="password" id="password_confirm" name="password_confirm"><br/>
-				<input type="submit" value="Add" onsubmit="submitUser();">
-				<input type="button" value="Cancel" onsubmit="closeModal();">
-				<input type="button" value="Delete" onsubmit="deleteUser();">
+				<span id="error_message"></span>
+				<input type="button" id="btn_add" value="Add" onclick="submitAddUser();">
+				<input type="button" id="btn_upd" value="Update" onclick="submitUpdateUser();">
+				<input type="button" id="btn_del" value="Delete" onclick="submitDeleteUser();">
+				<input type="button" class="btn_show" value="Cancel" onclick="closeModal();">
 			</form>
 		</div>
 	</div>
@@ -46,14 +51,117 @@
 		function newUser() {
 			var body = document.getElementsByTagName('body')[0];
 			body.classList.add("show-modal");
-		}
-		function submitUser() {
-			var username = document.getElementById('username').value;
-			var password = document.getElementById('password').value;
-			var password_confirm = document.getElementById('password_confirm').value;
 
-			return false;
+			var modal_title = document.getElementById('modal-title');
+			modal_title.innerText = "New User";
+
+			var form_username = document.getElementById('username');
+			form_username.removeAttribute("disabled");
+
+			formButtons(true, false, false);
 		}
+
+		function updateUser(id) {
+			var user = document.getElementById(id);
+			if (!user) return false;
+
+			var body = document.getElementsByTagName('body')[0];
+			body.classList.add("show-modal");
+
+			var modal_title = document.getElementById('modal-title');
+			modal_title.innerText = "Update User";
+
+			var cur_username = user.getElementsByClassName('mod-name')[0];
+			var form_username = document.getElementById('username');
+			form_username.value = cur_username.innerText;
+			form_username.setAttribute("disabled", "disabled");
+
+			formButtons(false, true, true);
+		}
+
+		function formButtons(add, upd, del) {
+
+			var btn_add = document.getElementById('btn_add');
+			var btn_upd = document.getElementById('btn_upd');
+			var btn_del = document.getElementById('btn_del');
+
+			btn_add.classList.remove("btn_hide");
+			btn_upd.classList.remove("btn_hide");
+			btn_del.classList.remove("btn_hide");
+
+			btn_add.classList.remove("btn_show");
+			btn_upd.classList.remove("btn_show");
+			btn_del.classList.remove("btn_show");
+
+			btn_add.classList.add((add ? "btn_show" : "btn_hide"));
+			btn_upd.classList.add((upd ? "btn_show" : "btn_hide"));
+			btn_del.classList.add((del ? "btn_show" : "btn_hide"));
+		}
+
+		function validateInput() {
+			var error = "";
+			var username = document.getElementById('username');
+			var password = document.getElementById('password');
+			var password_confirm = document.getElementById('password_confirm');
+			var error_message = document.getElementById('error_message');
+
+			username.classList.remove("error");
+			password.classList.remove("error");
+			password_confirm.classList.remove("error");
+
+			if (username.value == "") {
+				username.classList.add("error");
+				error += "Username cannot be blank\n";
+			}
+
+			if (password.value == "") {
+				password.classList.add("error");
+				error += "Password cannot be blank\n";
+			}
+
+			if (password_confirm.value == "") {
+				password_confirm.classList.add("error");
+				error += "Password repeat cannot be blank\n";
+			}
+
+			if (password_confirm.value !== password.value) {
+				password_confirm.classList.add("error");
+				error += "Passwords do not match\n";
+			}
+
+			error_message.innerText = error;
+
+			return error;
+		}
+
+		function submitAddUser() {
+			submitUser("POST", "/api/users");
+		}
+		function submitUpdateUser() {
+			var username = document.getElementById('username');
+			submitUser("PUT", "/api/users/" + username.value);
+		}
+		function submitDeleteUser() {
+			var username = document.getElementById('username');
+			submitUser("DELETE", "/api/users/" + username.value);
+		}
+
+		function submitUser(method, url) {
+			if (validateInput() !== "") return false;
+
+			var username = document.getElementById('username');
+			var password = document.getElementById('password');
+
+			var data = {
+				"username": username.value,
+				"password": password.value
+			}
+
+			sendRequest(url, method, data, function(res) {
+				window.location.reload();
+			});
+		}
+
 		function closeModal() {
 			var username = document.getElementById('username');
 			var password = document.getElementById('password');

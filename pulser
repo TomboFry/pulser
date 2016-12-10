@@ -25,6 +25,8 @@ res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" -d urge
 
 status=$(echo $res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
 
+echo $res
+
 if [[ $status == "success" ]]; then
 	exit 0
 else

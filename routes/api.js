@@ -36,6 +36,23 @@ module.exports = (db, cf, io) => {
 	let mod = db.get("modules");
 	let users = db.get("users");
 
+	let genPassword = (username, password, callback) => {
+		bcrypt.genSalt(cf.SALTROUNDS, (err, salt) => {
+			if (err) callback(null, err);
+			bcrypt.hash(password, salt, null, (err, hashed_password) => {
+				if (err) callback(null, err);
+				let values = {
+					username: username,
+					password: hashed_password,
+					token: "",
+					token_expiry: ""
+				}
+				console.log(values);
+				callback(values);
+			});
+		});
+	};
+
 	router.use(/\/(modules|auth)/, (req, res, next) => {
 		if (req.method != "PUT") {
 			// Authenticate after every request
@@ -83,7 +100,18 @@ module.exports = (db, cf, io) => {
 			users
 			.update(user, values)
 			.then(done => {
-				resJson(res, status.SUC, values.token);
+				resJson(
+					res
+					.clearCookie("token").clearCookie("username")
+					.cookie("token",
+					        values.token,
+					        { maxAge: values.token_expiry })
+					.cookie("username",
+					        username,
+					        {maxAge: values.token_expiry }),
+					status.SUC,
+					values.token
+				);
 			})
 			.catch(routeError(res));
 		};
@@ -106,8 +134,16 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
+	router.post("/logout", (req, res) => {
+		res
+		.clearCookie("token")
+		.clearCookie("username")
+		.redirect("/api");
+	});
+
 	router.post("/users", (req, res) => {
 		users = db.get("users");
+
 		if (!req.body.username || !req.body.password) {
 			return resJson(res, status.ERR,
 			               "Both username and password required");
@@ -120,7 +156,10 @@ module.exports = (db, cf, io) => {
 		.findOne({username: username})
 		.then(user => {
 			if (user == null) {
-				genPassword(password, values => {
+				console.log("1 - About to call genPW");
+				genPassword(username, password, (values, err) => {
+					if (err) routeError(res)(err);
+					console.log("3 - Got callback function");
 					users
 					.insert(values)
 					.then(done => {
@@ -136,28 +175,48 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
-	router.put("/users/:username", (req, res) => {
-		resJson(res, status.ERR, "Not fully implemented");
-
+	router.route("/users/:username")
+	.put((req, res) => {
+		const username = req.params.username;
 		const password = req.body.password;
-		const password_confirm = req.body.password_confirm;
 
-		if (!password || !password_confirm) {
-			resJson(res, status.ERR, "Passwords must be filled in");
-		} else if (password !== password_confirm) {
-			resJson(res, status.ERR, "Passwords must match");
+		if (!password) {
+			resJson(res, status.ERR, "Password must be filled in");
 		}
 
 		users
-		.findOne({ username: req.params.username })
+		.findOne({ username: username })
 		.then(user => {
 			if (user != null) {
-				// TODO: Generate new password
-				//genPassword()
+				genPassword(username, password, (values, err) => {
+					if (err) routeError(res)(err);
+					users
+					.update({username: username}, values)
+					.then(result => resJson(res, status.SUC, result))
+					.catch(error => routeError(res));
+				});
 			} else {
 				resJson(res, status.ERR, "User does not exist");
 			}
 		})
+		.catch(err => routeError(res));
+	})
+	.delete((req, res) => {
+		const username = req.params.username;
+		users
+		.findOne({ username: username })
+		.then(user => {
+			if (user != null) {
+				users
+				.remove({ username: username })
+				.then(result => {
+					resJson(res, status.SUC, result);
+				})
+			} else {
+				resJson(res, status.ERR, "User does not exist to delete");
+			}
+		})
+		.catch(err => routeError(res));
 	});
 
 	// Keep the modules db up to date after every request to the modules route
@@ -187,8 +246,10 @@ module.exports = (db, cf, io) => {
 		let query = { name: req.params.name };
 
 		let state = req.body.state;
-		if (state === undefined ||
-		   (state !== "" && mod_state.indexOf(state) == -1)
+		if (
+		    state !== undefined &&
+		    state !== "" &&
+		    mod_state.indexOf(state) == -1
 		) {
 			return resJson(res, status.ERR, `Invalid State: '${state}'`);
 		}
@@ -202,10 +263,12 @@ module.exports = (db, cf, io) => {
 		}
 
 		let urgency = req.body.urgency;
-		if (urgency === undefined ||
-		   (urgency !== "" && mod_urgency.indexOf(urgency) == -1)
+		if (
+		    urgency !== undefined &&
+		    urgency !== "" &&
+		    mod_urgency.indexOf(urgency) == -1
 		) {
-			return resJson(res, status.ERR, `Invalid Urgency: '${state}'`);
+			return resJson(res, status.ERR, `Invalid Urgency: '${urgency}'`);
 		}
 
 		let values = {
@@ -265,22 +328,6 @@ module.exports = (db, cf, io) => {
 // With the time included
 function resJson(res, status, obj) {
 	return res.json( { time: timeNow(), status: status, data: obj } );
-}
-
-function genPassword(password, callback) {
-	bcrypt.genSalt(cf.SALTROUNDS, (err, salt) => {
-		if (err) routeError(res)(err);
-		bcrypt.hash(password, salt, null, (err, pass) => {
-			if (err) routeError(res)(err);
-			let values = {
-				username: username,
-				password: pass,
-				token: "",
-				token_expiry: ""
-			}
-			callback(values);
-		});
-	});
 }
 
 function routeError(res) {
