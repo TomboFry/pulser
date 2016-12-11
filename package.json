@@ -1,6 +1,6 @@
 {
   "name": "pulser",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Get the status of any internet connected device on your phone",
   "main": "index.js",
   "scripts": {

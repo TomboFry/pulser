@@ -14,7 +14,7 @@ if [[ $# -lt 2 ]]; then
 	usage
 fi
 
-url="" # Edit to point to the pulser server
+url="localhost:8080" # Edit to point to the pulser server
 module=$1
 text=$2
 value=$3

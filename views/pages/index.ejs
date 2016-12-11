@@ -15,6 +15,7 @@
 	</style>
 </head>
 <body>
+	<% include ../partials/nav %>
 	<div class="container">
 		<a href="#" onclick="logout();" class="btn">logout</a>
 		<h1>Pulser</h1>
@@ -37,8 +38,12 @@
 	</div>
 	<script>
 		function logout() {
-			sendRequest("/api/logout", "POST", undefined, function(res) {
-				window.location.reload();
+			sendRequest("/api/logout", "POST", undefined, function(res, err) {
+				if (err) {
+					alert(err);
+				} else {
+					window.location.reload();
+				}
 			});
 		}
 	</script>

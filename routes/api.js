@@ -46,7 +46,7 @@ module.exports = (db, cf, io) => {
 					password: hashed_password,
 					token: "",
 					token_expiry: ""
-				}
+				};
 				console.log(values);
 				callback(values);
 			});
@@ -108,7 +108,7 @@ module.exports = (db, cf, io) => {
 					        { maxAge: values.token_expiry })
 					.cookie("username",
 					        username,
-					        {maxAge: values.token_expiry }),
+					        { maxAge: values.token_expiry }),
 					status.SUC,
 					values.token
 				);
@@ -119,14 +119,14 @@ module.exports = (db, cf, io) => {
 		users
 		.findOne({username: username})
 		.then(user => {
-			if (user != null) {
+			if (user !== null) {
 				bcrypt.compare(password, user.password, (err, result) => {
 					if (result === true) {
 						genToken(user);
 					} else {
 						resJson(res, status.ERR, "Password incorrect");
 					}
-				})
+				});
 			} else {
 				resJson(res, status.ERR, "User does not exist");
 			}
@@ -155,11 +155,9 @@ module.exports = (db, cf, io) => {
 		users
 		.findOne({username: username})
 		.then(user => {
-			if (user == null) {
-				console.log("1 - About to call genPW");
+			if (user === null) {
 				genPassword(username, password, (values, err) => {
 					if (err) routeError(res)(err);
-					console.log("3 - Got callback function");
 					users
 					.insert(values)
 					.then(done => {
@@ -187,7 +185,7 @@ module.exports = (db, cf, io) => {
 		users
 		.findOne({ username: username })
 		.then(user => {
-			if (user != null) {
+			if (user !== null) {
 				genPassword(username, password, (values, err) => {
 					if (err) routeError(res)(err);
 					users
@@ -206,12 +204,12 @@ module.exports = (db, cf, io) => {
 		users
 		.findOne({ username: username })
 		.then(user => {
-			if (user != null) {
+			if (user !== null) {
 				users
 				.remove({ username: username })
 				.then(result => {
 					resJson(res, status.SUC, result);
-				})
+				});
 			} else {
 				resJson(res, status.ERR, "User does not exist to delete");
 			}
@@ -320,7 +318,7 @@ module.exports = (db, cf, io) => {
 	});
 
 	return router;
-}
+};
 
 /*** MISCELLANEOUS FUNCTIONS ***/
 

@@ -16,31 +16,38 @@
 			<label for="password">Password: </label>
 			<input type="password" id="password" name="password" placeholder="Password"><br />
 			<input type="button" value="Login" id="btn_login" onclick="login();">
-			<input type="button" value="Register" id="btn_register" onclick="register();">
+			<input type="button" value="Register" id="btn_register" onclick="register();"><br/>
+			<div id="error_message"></div>
 		</form>
 	</div>
 	<script>
 		function login() {
+			go("login", function() {
+				window.location.reload();
+			});
+		}
+
+		function register() {
+			go("users", function() {
+				login();
+			});
+		}
+
+		function go(url, callback) {
 			var username = document.getElementById('username').value;
 			var password = document.getElementById('password').value;
 			var data = {
 				username: username,
 				password: password
 			};
-			sendRequest("/api/login", "POST", data, function(res) {
-				window.location.reload();
+			sendRequest("/api/" + url, "POST", data, function(res, err) {
+				if (err) {
+					var error_message = document.getElementById('error_message');
+					error_message.innerText = err;
+				} else {
+					callback();
+				}
 			})
-		}
-
-		function setCookie(name, value, expiry_days) {
-			var d = new Date();
-			d.setTime(d.getTime() + (expiry_days * 24 * 60 * 60 * 1000));
-			var expires = "expires=" + d.toUTCString();
-			document.cookie = name + "=" + value + ";" + expires + ";";
-		}
-
-		function register() {
-
 		}
 	</script>
 </body>

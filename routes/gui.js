@@ -21,18 +21,18 @@ module.exports = (db) => {
 	router.use("/", (req, res, next) => {
 		if (req.cookies.token && req.cookies.username) {
 			users
-				.findOne({
-					username: req.cookies.username,
-					token:    req.cookies.token
-				})
-				.then(user => {
-					if (user !== null && user.token_expiry > Date.now()) {
-						next();
-					} else {
-						res.render("pages/login");
-					}
-				})
-				.catch(routeError(res));
+			.findOne({
+				username: req.cookies.username,
+				token:    req.cookies.token
+			})
+			.then(user => {
+				if (user !== null && user.token_expiry > Date.now()) {
+					next();
+				} else {
+					res.render("pages/login");
+				}
+			})
+			.catch(routeError(res));
 		} else {
 			res.render("pages/login");
 		}
@@ -65,10 +65,10 @@ module.exports = (db) => {
 	// Any page not already rendered before this will throw a 404 error
 	router.use((req, res, next) => {
 		routeError(res, 404)("404 Not Found")
-	})
+	});
 
 	return router;
-}
+};
 
 function routeError (res, code=500) {
 	return error => {

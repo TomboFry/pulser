@@ -157,8 +157,13 @@
 				"password": password.value
 			}
 
-			sendRequest(url, method, data, function(res) {
-				window.location.reload();
+			sendRequest(url, method, data, function(res, err) {
+				if (err) {
+					var error_message = document.getElementById('error_message');
+					error_message.innerText = err;
+				} else {
+					window.location.reload();
+				}
 			});
 		}
 
