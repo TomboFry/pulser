@@ -36,6 +36,7 @@
 					value.innerText = module.value;
 					prog.style.width = module.value + "%";
 					state.innerText = module.state;
+					mod.className = `module ${module.state}`;
 					urgency.innerText = module.urgency;
 
 					match = true;
@@ -63,7 +64,9 @@
 				var e_text = createElement("p", "mod-text", module.text);
 				var e_progressbar = createElement("div", "progress-bar");
 				var e_progress = createElement("div", "mod-progress");
-				e_progress.style.width = module.value;
+				if (module.value) {
+					e_progress.style.width = `${module.value}%`;
+				}
 				var e_value = createElement("span", "mod-value", module.value);
 				var e_overlay = createElement("div", "value-overlay");
 				var e_cover = createElement("div", "mod-cover");
