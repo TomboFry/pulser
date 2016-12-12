@@ -85,6 +85,7 @@ module.exports = (db, cf, io) => {
 
 	// Authenticate the user if they don't have a token
 	router.post("/login", (req, res) => {
+		// Make sure a username and password are provided
 		if (!req.body.username || !req.body.password) {
 			return resJson(res, status.ERR,
 			               "Both username and password required");
@@ -92,9 +93,12 @@ module.exports = (db, cf, io) => {
 		const username = req.body.username;
 		const password = req.body.password;
 
+		// Generate a token for a specific user
 		let genToken = (user) => {
 			let values = Object.assign({}, user);
+			// Generate the token
 			values.token = hat();
+			// Add 7 days to the current date
 			values.token_expiry = Date.now() + 604800000;
 
 			users
@@ -102,7 +106,9 @@ module.exports = (db, cf, io) => {
 			.then(done => {
 				resJson(
 					res
+					// Clear any existing cookies
 					.clearCookie("token").clearCookie("username")
+					// Set the cookies with an expiry date
 					.cookie("token",
 					        values.token,
 					        { maxAge: values.token_expiry })
@@ -110,6 +116,7 @@ module.exports = (db, cf, io) => {
 					        username,
 					        { maxAge: values.token_expiry }),
 					status.SUC,
+					// Also return the token as a string if using the REST api.
 					values.token
 				);
 			})
@@ -120,6 +127,7 @@ module.exports = (db, cf, io) => {
 		.findOne({username: username})
 		.then(user => {
 			if (user !== null) {
+				// Make sure the password matches up with the hashed password
 				bcrypt.compare(password, user.password, (err, result) => {
 					if (result === true) {
 						genToken(user);
@@ -134,6 +142,7 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
+	// On logout, clear the cookies
 	router.post("/logout", (req, res) => {
 		res
 		.clearCookie("token")
@@ -141,9 +150,11 @@ module.exports = (db, cf, io) => {
 		.redirect("/api");
 	});
 
+	// Creating a new user
 	router.post("/users", (req, res) => {
 		users = db.get("users");
 
+		// Make sure a username and password are provided
 		if (!req.body.username || !req.body.password) {
 			return resJson(res, status.ERR,
 			               "Both username and password required");
@@ -155,14 +166,15 @@ module.exports = (db, cf, io) => {
 		users
 		.findOne({username: username})
 		.then(user => {
+			// Make sure the user doesn't already exist
 			if (user === null) {
+				// Also hash the provided password for the new user.
 				genPassword(username, password, (values, err) => {
 					if (err) routeError(res)(err);
 					users
 					.insert(values)
 					.then(done => {
 						resJson(res, status.SUC, done);
-						return;
 					})
 					.catch(routeError(res));
 				});
@@ -173,11 +185,13 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
+	// Updating an existing user
 	router.route("/users/:username")
 	.put((req, res) => {
 		const username = req.params.username;
 		const password = req.body.password;
 
+		// Make sure the password is provided
 		if (!password) {
 			resJson(res, status.ERR, "Password must be filled in");
 		}
@@ -185,7 +199,9 @@ module.exports = (db, cf, io) => {
 		users
 		.findOne({ username: username })
 		.then(user => {
+			// Make sure the user actually exists
 			if (user !== null) {
+				// Generate a new password and update the DB fields
 				genPassword(username, password, (values, err) => {
 					if (err) routeError(res)(err);
 					users
@@ -199,11 +215,13 @@ module.exports = (db, cf, io) => {
 		})
 		.catch(err => routeError(res));
 	})
+	// Deleting an existing user
 	.delete((req, res) => {
 		const username = req.params.username;
 		users
 		.findOne({ username: username })
 		.then(user => {
+			// Make sure it actually exists
 			if (user !== null) {
 				users
 				.remove({ username: username })
@@ -226,9 +244,9 @@ module.exports = (db, cf, io) => {
 	// Retrieve a list of modules and print them in an array
 	router.get("/modules", (req, res) => {
 		mod
-		.find({}/*, "-_id -text -value -state"*/)
+		.find({})
 		.then(modules => {
-			if (!modules || modules.length == 0) {
+			if (!modules || modules.length === 0) {
 				resJson(res, status.ERR, "No Modules Found");
 			} else {
 				resJson(res, status.SUC, modules);
@@ -243,6 +261,7 @@ module.exports = (db, cf, io) => {
 	.put((req, res) => {
 		let query = { name: req.params.name };
 
+		// If a state is provided, make sure it's valid
 		let state = req.body.state;
 		if (
 		    state !== undefined &&
@@ -252,6 +271,7 @@ module.exports = (db, cf, io) => {
 			return resJson(res, status.ERR, `Invalid State: '${state}'`);
 		}
 
+		// Also make sure the value (if provided) is between 0 and 100
 		let value = req.body.value;
 		if (value !== undefined && value !== "" &&
 		   ((Number(parseFloat(value)) != value) ||
@@ -260,6 +280,7 @@ module.exports = (db, cf, io) => {
 			               `Invalid or out of range value: '${value}'`);
 		}
 
+		// Make sure the urgency is valid if provided
 		let urgency = req.body.urgency;
 		if (
 		    urgency !== undefined &&
@@ -269,6 +290,7 @@ module.exports = (db, cf, io) => {
 			return resJson(res, status.ERR, `Invalid Urgency: '${urgency}'`);
 		}
 
+		// Create an object with all the validated values
 		let values = {
 			name: req.params.name,
 			text: req.body.text || "",
@@ -278,15 +300,19 @@ module.exports = (db, cf, io) => {
 			timestamp: Math.round(Date.now() / 1000)
 		};
 
+		// Send a packet to any clients connected via the websocket
+		// for push notifications
 		io.emit("module-update", values);
 
 		mod
 		.findOne(query)
 		.then(module => {
+			// If the module already exists, update it,
+			// otherwise add it.
 			if (module) {
 				mod
 				.update(query, values)
-				.then(module => resJson(res, status.SUC, module))
+				.then(module => resJson(res, status.SUC, values))
 				.catch(routeError(res));
 			} else {
 				mod
@@ -297,7 +323,7 @@ module.exports = (db, cf, io) => {
 		})
 		.catch(routeError(res));
 	})
-	// Return the status of the module
+	// Return the status of a module
 	.get((req, res) => {
 		mod
 		.findOne( { name: req.params.name } )
@@ -310,6 +336,7 @@ module.exports = (db, cf, io) => {
 		})
 		.catch(routeError(res));
 	})
+	// Delete the specified module 
 	.delete((req, res) => {
 		mod
 		.remove( { name: req.params.name} )

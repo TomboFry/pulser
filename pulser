@@ -5,7 +5,15 @@
 usage() {
 	cat <<EOM
 Usage:
-$(basename $0) ModuleName Text [Value] [State: created|progress|ongoing|finished]
+
+$(basename $0)
+    Module Name
+    Text
+    Value (0 - 100)
+    State (created/progress/ongoing/finished)
+    Urgency (low/med/high)
+
+eg. '$(basename $0) "Test Application" "Description" 100 progress low'
 EOM
 	exit 1
 }
@@ -15,7 +23,11 @@ if [[ $# -lt 2 ]]; then
 fi
 
 url="localhost:8080" # Edit to point to the pulser server
+
+# Replace any spaces in module name to html escape them
 module=$1
+module="${module// /\%20}"
+
 text=$2
 value=$3
 state=$4
@@ -23,12 +35,13 @@ urgency=$5
 
 res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" -d urgency="$urgency" http://$url/api/modules/$module | cat)
 
-status=$(echo $res | python -mjson.tool | grep '"status": ' | awk -F'"' '{print $4}')
+regex="\"status\":\"(error|success)\""
 
-echo $res
-
-if [[ $status == "success" ]]; then
-	exit 0
-else
-	exit 1
+if [[ $res =~ $regex ]]; then
+	echo ${BASH_REMATCH[1]}
+	if [[ ${BASH_REMATCH[1]} == "success" ]]; then
+		exit 0
+	else
+		exit 1
+	fi
 fi

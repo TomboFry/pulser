@@ -1,28 +1,36 @@
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta name="viewport" content="width=device-width, user-scalable=no,
+                               initial-scale=1.0, maximum-scale=1.0,
+                               minimum-scale=1.0">
 <script src="/socket.io/socket.io.js" type="text/javascript"></script>
 <script>
+	// Connect to the websocket
 	var socket = io();
+	// When a new module is received
 	socket.on("module-update", function (module) {
-		console.log(module, page);
+		// Notify the user only on logged in pages
 		if (page != "login" || page != "error") {
 			notify(module);
 		}
+		// If we're on the module page, update the
+		// elements on the page in real-time
 		if (page == "modules" && module) {
+			// Find all the modules
 			var mod_elms = document.getElementsByClassName("module");
 			var match = false;
 
+			// Check for a match, if there is an module with the same name
+			// as the one we just got.
 			for (var i = 0; i < mod_elms.length; i++) {
 				var mod = mod_elms[i];
 				var name = mod.getElementsByClassName("mod-name")[0];
+				// If we have a match, update its values here and now
 				if (name.innerText == module.name) {
 					var text    = mod.getElementsByClassName("mod-text")[0];
 					var value   = mod.getElementsByClassName("mod-value")[0];
 					var state   = mod.getElementsByClassName("mod-state")[0];
 					var urgency = mod.getElementsByClassName("mod-urgency")[0];
 					var prog    = mod.getElementsByClassName("mod-progress")[0];
-
-					console.log("We found a match!");
 
 					text.innerText = module.text;
 					value.innerText = module.value;
@@ -34,12 +42,17 @@
 					break;
 				}
 			}
+
+			// If there was no match
 			if (!match) {
-				console.log("We need to add a new one!");
+				// Create a module element
 				var elm = createElement("div", [ "module", module.state ]);
 				var escaped = module.name.replace(' ', '%20');
+				// Set its ID to the HTML escaped name
 				elm.setAttribute("id", escaped);
+				// Allow it to be deleted when clicked
 				elm.addEventListener("click", deleteModule(escaped));
+				// Create all the inside elements, such as name and state
 				var e_content = createElement("div", "mod-content");
 				var e_name = createElement("h3", "mod-name", module.name);
 				var e_meta = createElement("p", "mod-meta");
@@ -55,6 +68,7 @@
 				var e_overlay = createElement("div", "value-overlay");
 				var e_cover = createElement("div", "mod-cover");
 
+				// Append all the elements to the correct places
 				e_meta.appendChild(e_state);
 				e_meta.appendChild(e_urgency);
 
@@ -70,6 +84,8 @@
 
 				elm.appendChild(e_content);
 				elm.appendChild(e_cover);
+
+				// Insert the newly created element into the list of modules
 				var container = document.getElementById('modules');
 				container.insertBefore(elm, container.firstChild);
 			}
@@ -97,16 +113,20 @@
 		return elm;
 	}
 
+	// If we want to make a request to the API side of the server
 	function sendRequest(url, method, data, callback) {
 		var request = new XMLHttpRequest();
 
 		request.open(method, url, true);
 
 		request.onload = function() {
+			// If we got a valid response then send it
 			if (this.status >= 200 && this.status < 400) {
 				// Success!
 				var data = JSON.parse(this.response);
 				var error;
+				// If the status code was valid but the values provided were not
+				// set the error value to let the handler know
 				if (data.status != "success") {
 					error = data.data;
 				}
@@ -120,7 +140,10 @@
 			callback(undefined, "Unknown connection error. Please try again");
 		};
 
+		// Make sure to let the server we're sending JSON to parse it properly
 		request.setRequestHeader('Content-Type', 'application/json');
+
+		// Also set the authorisation headers to allow access.
 		request.setRequestHeader(
 			'Authorization',
 			'Basic ' + btoa(getCookie("username") + ":" + getCookie("token"))
@@ -149,9 +172,11 @@
 		return undefined;
 	}
 
+	// Send a notification to the user
 	function notify(module) {
-		// Let's check if the browser supports notifications
+		// Check if the browser supports notifications
 		if ("Notification" in window) {
+			// If it does, make sure we have permission to send one
 			Notification.requestPermission(function (permission) {
 				if (permission === "granted") {
 					var options = {
