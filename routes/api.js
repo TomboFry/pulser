@@ -33,7 +33,7 @@ module.exports = (db, cf, io) => {
 	/*** ROUTING ***/
 
 	// Get an instance of the module and user collections
-	let mod = db.get("modules");
+	let db_app = db.get("applications");
 	let users = db.get("users");
 
 	let genPassword = (username, password, callback) => {
@@ -53,31 +53,31 @@ module.exports = (db, cf, io) => {
 		});
 	};
 
-	router.use(/\/(modules|auth)/, (req, res, next) => {
-		if (req.method != "PUT") {
-			// Authenticate after every request
-			if (req.headers.authorization) {
-				const encoded = req.headers.authorization.split(' ')[1];
-				const decoded = new Buffer(encoded, 'base64')
-				                  .toString('utf8')
-				                  .split(":");
-				users
-				.findOne({username: decoded[0], token: decoded[1]})
-				.then(user => {
-					if (user !== null && user.token_expiry > Date.now()) {
-						next();
-					} else {
-						resJson(res, status.ERR, "Authentication failed");
-					}
-				})
-				.catch(routeError(res));
-			} else {
-				resJson(res, status.ERR, "Authentication required");
-			}
-		} else {
-			next();
-		}
-	});
+	// router.use(/\/(applications\/:app_slug\/|auth)/, (req, res, next) => {
+	// 	if (req.method != "PUT") {
+	// 		// Authenticate after every request
+	// 		if (req.headers.authorization) {
+	// 			const encoded = req.headers.authorization.split(' ')[1];
+	// 			const decoded = new Buffer(encoded, 'base64')
+	// 			                  .toString('utf8')
+	// 			                  .split(":");
+	// 			users
+	// 			.findOne({username: decoded[0], token: decoded[1]})
+	// 			.then(user => {
+	// 				if (user !== null && user.token_expiry > Date.now()) {
+	// 					next();
+	// 				} else {
+	// 					resJson(res, status.ERR, "Authentication failed");
+	// 				}
+	// 			})
+	// 			.catch(routeError(res));
+	// 		} else {
+	// 			resJson(res, status.ERR, "Authentication required");
+	// 		}
+	// 	} else {
+	// 		next();
+	// 	}
+	// });
 
 	// When the homepage is requested just print it was successful
 	router.get("/", (req, res) => resJson(res, status.SUC));
@@ -235,112 +235,242 @@ module.exports = (db, cf, io) => {
 		.catch(err => routeError(res));
 	});
 
-	// Keep the modules db up to date after every request to the modules route
-	router.use("/modules", (req, res, next) => {
-		mod = db.get("modules");
+	// Keep the applications db up to date after every request to the applications route
+	router.use("/applications", (req, res, next) => {
+		db_app = db.get("applications");
 		next();
 	});
 
-	// Retrieve a list of modules and print them in an array
-	router.get("/modules", (req, res) => {
-		mod
+	// Retrieve a list of applications and print them in an array
+	router.route("/applications")
+	.get((req, res) => {
+		db_app
 		.find({})
-		.then(modules => {
-			if (!modules || modules.length === 0) {
-				resJson(res, status.ERR, "No Modules Found");
+		.then(applications => {
+			if (!applications || applications.length === 0) {
+				resJson(res, status.ERR, "No applications Found");
 			} else {
-				resJson(res, status.SUC, modules);
+				resJson(res, status.SUC, applications);
+			}
+		})
+		.catch(routeError(res));
+	})
+	.post((req, res) => {
+
+		let requirement = 0;
+		let requirement_threshold = 2;
+
+		if (req.body.app_slug) requirement++;
+		if (req.body.app_name) requirement++;
+		if (req.body.app_image) requirement++;
+		if (requirement < requirement_threshold) {
+			resJson(res, status.ERR,
+			        "Application name and slug required, image optional");
+			return;
+		}
+
+		let query = { slug: req.body.app_slug };
+
+		db_app
+		.findOne(query)
+		.then(application => {
+			if (application) {
+				resJson(res, status.ERR, "Application already exists");
+			} else {
+				let values = {
+					slug: req.body.app_slug,
+					name: req.body.app_name,
+					image: req.body.app_image || "",
+					updates: []
+				}
+				db_app
+				.insert(values)
+				.then(result => resJson(res, status.SUC, "Application added"))
+				.catch(routeError(res));
 			}
 		})
 		.catch(routeError(res));
 	});
 
-	// When a specific status is requested
-	router.route("/modules/:name")
-	// Update it, and if it doesn't exist create it.
-	.put((req, res) => {
-		let query = { name: req.params.name };
+	router.route("/applications/:app_slug")
+	.get((req, res) => {
+		let query = { slug: req.params.app_slug };
 
-		// If a state is provided, make sure it's valid
-		let state = req.body.state;
-		if (
-		    state !== undefined &&
-		    state !== "" &&
-		    mod_state.indexOf(state) == -1
-		) {
-			return resJson(res, status.ERR, `Invalid State: '${state}'`);
-		}
-
-		// Also make sure the value (if provided) is between 0 and 100
-		let value = req.body.value;
-		if (value !== undefined && value !== "" &&
-		   ((Number(parseFloat(value)) != value) ||
-		    (value < 0 || value > 100))) {
-			return resJson(res, status.ERR,
-			               `Invalid or out of range value: '${value}'`);
-		}
-
-		// Make sure the urgency is valid if provided
-		let urgency = req.body.urgency;
-		if (
-		    urgency !== undefined &&
-		    urgency !== "" &&
-		    mod_urgency.indexOf(urgency) == -1
-		) {
-			return resJson(res, status.ERR, `Invalid Urgency: '${urgency}'`);
-		}
-
-		// Create an object with all the validated values
-		let values = {
-			name: req.params.name,
-			text: req.body.text || "",
-			value: value || "",
-			state: state || mod_state[0],
-			urgency: urgency || mod_urgency[0],
-			timestamp: Math.round(Date.now() / 1000)
-		};
-
-		// Send a packet to any clients connected via the websocket
-		// for push notifications
-		io.emit("module-update", values);
-
-		mod
+		db_app
 		.findOne(query)
-		.then(module => {
-			// If the module already exists, update it,
-			// otherwise add it.
-			if (module) {
-				mod
+		.then(application => {
+			if (application) {
+				resJson(res, status.SUC, application);
+			} else {
+				resJson(res, status.ERR, "Application doesn't exist");
+			}
+		})
+		.catch(routeError(res));
+	})
+	.put((req, res) => {
+		let query = { slug: req.params.app_slug };
+
+		db_app
+		.findOne(query)
+		.then(application => {
+			if (application) {
+				let values = {
+					slug: application.slug,
+					name: req.body.app_name || application.name,
+					image: req.body.app_image || application.image,
+					updates: application.updates
+				}
+				db_app
 				.update(query, values)
-				.then(module => resJson(res, status.SUC, values))
+				.then(result => resJson(res, status.SUC, "Application updated"))
 				.catch(routeError(res));
 			} else {
-				mod
-				.insert(values)
+				resJson(res, status.ERR, "Application doesn't exist");
+			}
+		})
+	})
+	.delete((req, res) => {
+		let query = { slug: req.params.app_slug };
+
+		db_app
+		.findOne(query)
+		.then(application => {
+			if (application) {
+				db_app
+				.remove(query)
+				.then(result => resJson(res, status.SUC, "Application deleted"))
+				.catch(routeError(res));
+			} else {
+				resJson(res, status.ERR, "Application doesn't exist");
+			}
+		})
+	});
+
+	// When a specific status is requested
+	router.route("/applications/:app_slug/updates")
+	.get((req, res) => {
+		let query = { slug: req.params.app_slug };
+
+		db_app
+		.findOne(query)
+		.then(application => {
+			if (application && application.updates.length > 0) {
+				resJson(res, status.SUC, application.updates);
+			} else {
+				resJson(res, status.ERR,
+				        `Updates are empty for '${application.name}'`);
+			}
+		})
+	})
+	// Update it, and if it doesn't exist create it.
+	.post((req, res) => {
+		let query = { slug: req.params.app_slug };
+
+		db_app
+		.findOne(query)
+		.then(application => {
+			// If the application already exists, update it, otherwise add it.
+			if (application) {
+				// If a state is provided, make sure it's valid
+				let state = req.body.state;
+				if (
+					state !== undefined &&
+					state !== "" &&
+					mod_state.indexOf(state) == -1
+				) {
+					resJson(res, status.ERR, `Invalid State: '${state}'`);
+					return;
+				}
+
+				// Also make sure the value (if provided) is between 0 and 100
+				let value = req.body.value;
+				if (value !== undefined && value !== "" &&
+				   ((Number(parseFloat(value)) != value) ||
+				    (value < 0 || value > 100))) {
+					resJson(res, status.ERR,
+					        `Invalid or out of range value: '${value}'`);
+					return;
+				}
+
+				// Make sure the urgency is valid if provided
+				let urgency = req.body.urgency;
+				if (
+					urgency !== undefined &&
+					urgency !== "" &&
+					mod_urgency.indexOf(urgency) == -1
+				) {
+					resJson(res, status.ERR, `Invalid Urgency: '${urgency}'`);
+					return;
+				}
+
+				// Create an object with all the validated values
+				let values = {
+					_id: db.helper.id.ObjectID(), // Creates a new ObjectID
+					text: req.body.text || "",
+					value: value || "",
+					state: state || mod_state[0],
+					urgency: urgency || mod_urgency[0],
+					timestamp: Math.round(Date.now() / 1000)
+				};
+
+				// Send a packet to any clients connected via the websocket
+				// for push notifications
+				io.emit("module-update", {
+					"slug": req.params.app_slug,
+					"updates": values
+				});
+
+				db_app
+				.update(query, { $push: { "updates": values } })
 				.then(module => resJson(res, status.SUC, module))
 				.catch(routeError(res));
-			}
-		})
-		.catch(routeError(res));
-	})
-	// Return the status of a module
-	.get((req, res) => {
-		mod
-		.findOne( { name: req.params.name } )
-		.then(module => {
-			if (module) {
-				resJson(res, status.SUC, module);
 			} else {
-				resJson(res, status.ERR, "Module not set");
+				resJson(res, status.ERR, "Application doesn't exist");
+			}
+		})
+		.catch(routeError(res));
+	});
+
+	router.route("/applications/:app_slug/updates/:upd_id")
+	.get((req, res) => {
+		let query = {
+			"slug": req.params.app_slug,
+			"updates": { "$elemMatch": { "_id": req.params.upd_id } }
+		};
+
+		db_app
+		.findOne(query)
+		.then(update => {
+			if (update) {
+				resJson(res, status.SUC, update.updates);
+			} else {
+				resJson(res, status.ERR, "Update not found")
 			}
 		})
 		.catch(routeError(res));
 	})
-	// Delete the specified module 
 	.delete((req, res) => {
-		mod
-		.remove( { name: req.params.name} )
-		.then(upd => resJson(res, status.SUC, upd))
+		let query = {
+			"slug": req.params.app_slug,
+			"updates": { "$elemMatch": { "_id": req.params.upd_id } }
+		};
+
+		db_app
+		.findOne(query)
+		.then(update => {
+			if (update) {
+				let updates = {
+					"$pull": { "updates": { "_id": req.params.upd_id } }
+				};
+
+				db_app
+				.update(query, updates)
+				.then(result => resJson(res, status.SUC, "Update Removed"))
+				.catch(routeError(res));
+			} else {
+				resJson(res, status.ERR, "This update doesn't exist");
+			}
+		})
 		.catch(routeError(res));
 	});
 

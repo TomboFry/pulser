@@ -25,16 +25,17 @@ fi
 url="localhost:8080" # Edit to point to the pulser server
 
 # Replace any spaces in module name to html escape them
-module=$1
-module="${module// /\%20}"
+application_slug=$1
+application_slug="${application_slug// /\%20}"
 
 text=$2
 value=$3
 state=$4
 urgency=$5
 
-res=$(curl -s -X PUT -d text="$text" -d value="$value" -d state="$state" -d urgency="$urgency" http://$url/api/modules/$module | cat)
+res=$(curl -s -X POST -d text="$text" -d value="$value" -d state="$state" -d urgency="$urgency" http://$url/api/applications/$application_slug/updates | cat)
 
+echo $res
 regex="\"status\":\"(error|success)\""
 
 if [[ $res =~ $regex ]]; then
