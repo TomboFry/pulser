@@ -3,7 +3,6 @@ npm-debug.log
 .DS_Store
 ._*
 *.pbxuser
-*.pbxproj
 project.xcworkspace/
 xcuserdata/
 
