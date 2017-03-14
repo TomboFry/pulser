@@ -14,7 +14,7 @@ module.exports = (db) => {
 	/*** ROUTING ***/
 
 	// Get an instance of the module and user collections
-	let mod = db.get("modules");
+	let db_app = db.get("applications");
 	let users = db.get("users");
 
 	// Only list GUI pages if we have the correct cookies set
@@ -45,21 +45,21 @@ module.exports = (db) => {
 		res.render("pages/index");
 	});
 
-	// Display a list of all modules
-	router.get("/modules", (req, res) => {
-		// Allow query searching through the modules
+	// Display a list of all applications
+	router.get("/applications", (req, res) => {
+		// Allow query searching through the applications
 		let query = {};
 		// Set the urgency and state if it is valid in the query
 		if (req.query.urgency) query.urgency = req.query.urgency;
 		if (req.query.state)   query.state   = req.query.state;
-		mod
+		db_app
 		.find(query)
-		.then(modules => {
-			res.render("pages/modules",
+		.then(applications => {
+			res.render("pages/applications",
 				{
-					// Return the modules sorted by timestamp
+					// Return the applications sorted by timestamp
 					// so the most recent module appears first
-					modules: modules.sort((a, b) => {
+					applications: applications/*.sort((a, b) => {
 						if (a.timestamp < b.timestamp) {
 							return 1;
 						}
@@ -67,7 +67,7 @@ module.exports = (db) => {
 							return -1;
 						}
 						return 0;
-					})
+					})*/
 				}
 			);
 		})

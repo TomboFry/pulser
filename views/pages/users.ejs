@@ -14,16 +14,19 @@
 		<a href="#" onclick="newUser();" class="btn">+</a>
 		<h1>Users</h1>
 		<% users.forEach((user) => { %>
-		<div class="module" id="<%= user._id %>" onclick="updateUser('<%= user._id %>');">
-			<div class="mod-content">
-				<h3 class="mod-name"><%= user.username %></h3>
-				<p class="mod-text">
-					Password: <%= user.password %><br/>
+		<div class="application" id="<%= user._id %>" onclick="updateUser('<%= user._id %>');">
+			<div class="app-content">
+				<input class="is_application" type="checkbox" 
+				<% if (user.is_application) { %>
+					checked
+				<% } %>>
+				<h3 class="app-name"><%= user.username %></h3>
+				<p class="app-text">
 					Token: <%= user.token %><br/>
 					Token Expiry: <%= new Date(user.token_expiry) %><br/>
 				</p>
 			</div>
-			<div class="mod-cover"></div>
+			<div class="app-cover"></div>
 		</div>
 		<% }) %>
 	</div>
@@ -39,6 +42,8 @@
 				<input type="password" id="password" name="password"><br/>
 				<label for="password_confirm">Confirm Password:</label>
 				<input type="password" id="password_confirm" name="password_confirm"><br/>
+				<input type="checkbox" id="is_application" name="is_application" onclick="applicationUserWarning();">
+				<label for="is_application"> Application User (so this user can post updates)</label>
 				<span id="error_message"></span>
 				<input type="button" id="btn_add" value="Add" onclick="submitAddUser();">
 				<input type="button" id="btn_upd" value="Update" onclick="submitUpdateUser();">
@@ -48,6 +53,7 @@
 		</div>
 	</div>
 	<script>
+		var hasWarned = false;
 		function newUser() {
 			var body = document.getElementsByTagName('body')[0];
 			body.classList.add("show-modal");
@@ -71,10 +77,13 @@
 			var modal_title = document.getElementById('modal-title');
 			modal_title.innerText = "Update User";
 
-			var cur_username = user.getElementsByClassName('mod-name')[0];
+			var cur_username = user.getElementsByClassName('app-name')[0];
+			var cur_is_application = user.getElementsByClassName('is_application')[0];
 			var form_username = document.getElementById('username');
+			var form_is_application = document.getElementById('is_application');
 			form_username.value = cur_username.innerText;
 			form_username.setAttribute("disabled", "disabled");
+			form_is_application.checked = cur_is_application.checked;
 
 			formButtons(false, true, true);
 		}
@@ -151,10 +160,12 @@
 
 			var username = document.getElementById('username');
 			var password = document.getElementById('password');
+			var is_application = document.getElementById('is_application');
 
 			var data = {
 				"username": username.value,
-				"password": password.value
+				"password": password.value,
+				"is_application": is_application.checked
 			}
 
 			sendRequest(url, method, data, function(res, err) {
@@ -171,9 +182,11 @@
 			var username = document.getElementById('username');
 			var password = document.getElementById('password');
 			var password_confirm = document.getElementById('password_confirm');
+			var is_application = document.getElementById('is_application');
 			username.value = "";
 			password.value = "";
 			password_confirm.value = "";
+			is_application.checked = false;
 
 			var modal = document.getElementById('modal');
 			modal.classList.add("closing");
@@ -184,6 +197,18 @@
 				var body = document.getElementsByTagName('body')[0];
 				body.classList.remove("show-modal");
 			}, 200);
+		}
+
+		function applicationUserWarning() {
+			var is_application = document.getElementById('is_application');
+			console.log(is_application.checked === true);
+			if (is_application.checked === true && hasWarned === false) {
+				if (!confirm("Setting this user as an Application User will unset the existing Application User. Are you sure you want to mark this as the Application User?")){
+					is_application.checked = false;
+				} else {
+					hasWarned = true;
+				}
+			}
 		}
 	</script>
 </body>

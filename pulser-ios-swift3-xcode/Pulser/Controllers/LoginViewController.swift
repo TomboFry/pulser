@@ -26,7 +26,9 @@ class LoginViewController: UIViewController {
 				if error == nil && result != nil && result!["status"] as! String == "success" {
 					self.showApplications()
 				} else {
-					print(error!, result!)
+					if error != nil {
+						Network.alert("Error occurred", message: error!)
+					}
 				}
 			})
 		}

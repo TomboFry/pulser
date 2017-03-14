@@ -2,18 +2,28 @@
 
 # Pulser Updater
 
+# Edit to point to the pulser server URL
+url="localhost:8080"
+# Edit to login with the application user and token
+# (both of which can be obtained from the web GUI)
+user=""
+token=""
+
+# DO NOT EDIT FROM THIS POINT
+
 usage() {
 	cat <<EOM
 Usage:
 
 $(basename $0)
-    Module Name
-    Text
-    Value (0 - 100)
-    State (created/progress/ongoing/finished)
-    Urgency (low/med/high)
+    Application Slug
+    Update Text
+    [Value (0 - 100)]
+    [State (created/progress/ongoing/finished)]
+    [Priority (low/med/high)]
 
-eg. '$(basename $0) "Test Application" "Description" 100 progress low'
+eg. '$(basename $0) test-application "Description" 100 progress low'
+    '$(basename $0) another-program "Another Description" (other fields are optional)'
 EOM
 	exit 1
 }
@@ -21,8 +31,6 @@ EOM
 if [[ $# -lt 2 ]]; then
 	usage
 fi
-
-url="localhost:8080" # Edit to point to the pulser server
 
 # Replace any spaces in module name to html escape them
 application_slug=$1
@@ -33,7 +41,7 @@ value=$3
 state=$4
 urgency=$5
 
-res=$(curl -s -X POST -d text="$text" -d value="$value" -d state="$state" -d urgency="$urgency" http://$url/api/applications/$application_slug/updates | cat)
+res=$(curl -s -X POST -u "$user:$token" -d text="$text" -d value="$value" -d state="$state" -d urgency="$urgency" http://$url/api/applications/$application_slug/updates | cat)
 
 echo $res
 regex="\"status\":\"(error|success)\""

@@ -75,7 +75,11 @@ class Network {
 				// Convert server json response to NSDictionary
 				do {
 					if let dict = try JSONSerialization.jsonObject(with: data!, options: []) as? Dictionary<String, Any> {
-						return onCompletion(dict, nil)
+						if dict["status"] as! String == "error" {
+							return onCompletion(nil, dict["data"] as? String)
+						} else {
+							return onCompletion(dict, nil)
+						}
 					} else {
 						return onCompletion(nil, "Could not parse response from server")
 					}

@@ -23,14 +23,14 @@
 			// as the one we just got.
 			for (var i = 0; i < mod_elms.length; i++) {
 				var mod = mod_elms[i];
-				var name = mod.getElementsByClassName("mod-name")[0];
+				var name = mod.getElementsByClassName("app-name")[0];
 				// If we have a match, update its values here and now
 				if (name.innerText == module.name) {
-					var text    = mod.getElementsByClassName("mod-text")[0];
-					var value   = mod.getElementsByClassName("mod-value")[0];
-					var state   = mod.getElementsByClassName("mod-state")[0];
-					var urgency = mod.getElementsByClassName("mod-urgency")[0];
-					var prog    = mod.getElementsByClassName("mod-progress")[0];
+					var text    = mod.getElementsByClassName("app-text")[0];
+					var value   = mod.getElementsByClassName("app-value")[0];
+					var state   = mod.getElementsByClassName("app-state")[0];
+					var urgency = mod.getElementsByClassName("app-urgency")[0];
+					var prog    = mod.getElementsByClassName("app-progress")[0];
 
 					text.innerText = module.text;
 					value.innerText = module.value;
@@ -54,22 +54,22 @@
 				// Allow it to be deleted when clicked
 				elm.addEventListener("click", deleteModule(escaped));
 				// Create all the inside elements, such as name and state
-				var e_content = createElement("div", "mod-content");
-				var e_name = createElement("h3", "mod-name", module.name);
-				var e_meta = createElement("p", "mod-meta");
-				var e_state = createElement("span", "mod-state", module.state);
+				var e_content = createElement("div", "app-content");
+				var e_name = createElement("h3", "app-name", module.name);
+				var e_meta = createElement("p", "app-meta");
+				var e_state = createElement("span", "app-state", module.state);
 				var e_urgency = createElement(
-					"span", "mod-urgency", module.urgency
+					"span", "app-urgency", module.urgency
 				);
-				var e_text = createElement("p", "mod-text", module.text);
+				var e_text = createElement("p", "app-text", module.text);
 				var e_progressbar = createElement("div", "progress-bar");
-				var e_progress = createElement("div", "mod-progress");
+				var e_progress = createElement("div", "app-progress");
 				if (module.value) {
 					e_progress.style.width = `${module.value}%`;
 				}
-				var e_value = createElement("span", "mod-value", module.value);
+				var e_value = createElement("span", "app-value", module.value);
 				var e_overlay = createElement("div", "value-overlay");
-				var e_cover = createElement("div", "mod-cover");
+				var e_cover = createElement("div", "app-cover");
 
 				// Append all the elements to the correct places
 				e_meta.appendChild(e_state);
@@ -250,7 +250,7 @@ h6 { font-size: 16pt; }
 	max-width: 800px;
 	padding: 48px;
 }
-.mod-text {
+.app-text {
 	line-height: 1.618;
 }
 .progress-bar {
@@ -263,7 +263,7 @@ h6 { font-size: 16pt; }
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 	overflow: hidden;
 }
-.mod-progress {
+.app-progress {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -304,28 +304,29 @@ h6 { font-size: 16pt; }
 	);
 }
 
-.mod-meta {
-	opacity: 0.5;
+.app-meta {
+	/*opacity: 0.5;*/
+	color: #888;
 	position: absolute;
 	top: 0;
 	right: 0;
 	text-align: right;
-	font-size: 20pt;
+	font-size: 12pt;
 	font-weight: 300;
 }
-.mod-state, .mod-urgency {
+.app-state, .app-urgency {
 	display: block;
 }
-.mod-state::before {
+.app-state::before {
 	content: 'state: ';
 }
-.mod-urgency::before {
+.app-urgency::before {
 	content: 'urgency: ';
 }
-.mod-value::after {
+.app-value::after {
 	content: '%';
 }
-.module, .mod-content > * {
+.application, .app-content > * {
 	-webkit-transition:
 		color 0.15s, background-color 0.15s,
 		box-shadow 0.15s, -webkit-box-shadow 0.15s,
@@ -340,14 +341,14 @@ h6 { font-size: 16pt; }
 	height 0.15s;
 	margin-bottom: 16px;
 }
-.mod-content > *:last-child {
+.app-content > *:last-child {
 	margin-bottom: 0;
 }
-.mod-content {
+.app-content {
 	position: relative;
 	z-index: 1;
 }
-.mod-cover {
+.app-cover {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -361,7 +362,7 @@ h6 { font-size: 16pt; }
 	-o-transition: opacity 0.15s, background-color 0.15s;
 	transition: opacity 0.15s, background-color 0.15s;
 }
-.module {
+.application {
 	padding: 24px;
 	background-color: #FFF;
 	border-radius: 8px;
@@ -371,27 +372,30 @@ h6 { font-size: 16pt; }
 	color: #212121;
 	position: relative;
 }
-.module.progress {
+.application.progress {
 	background-color: #4FC3F7;
 }
-.module.finished {
+.application.finished {
 	background-color: #4caf50;
 }
-.module.failed, .module.failed .mod-progress {
+.application.failed, .application.failed .app-progress {
 	background-color: #f44336;
 }
-.module:hover {
+.application:hover {
 	/*background-color: #fff;*/
 	-webkit-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 	cursor: pointer;
 	color: #000;
 }
-.module:hover .mod-cover {
+.application:hover .app-cover {
 	opacity: 1;
 }
-.module:active .mod-cover {
+.application:active .app-cover {
 	background-color: #aaa;
+}
+.is_application {
+	display: none;
 }
 #nav {
 	position: absolute;

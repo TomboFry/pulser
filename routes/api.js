@@ -45,7 +45,8 @@ module.exports = (db, cf, io) => {
 					username: username,
 					password: hashed_password,
 					token: "",
-					token_expiry: ""
+					token_expiry: "",
+					is_application: false
 				};
 				console.log(values);
 				callback(values);
@@ -53,31 +54,38 @@ module.exports = (db, cf, io) => {
 		});
 	};
 
-	// router.use(/\/(applications\/:app_slug\/|auth)/, (req, res, next) => {
-	// 	if (req.method != "PUT") {
-	// 		// Authenticate after every request
-	// 		if (req.headers.authorization) {
-	// 			const encoded = req.headers.authorization.split(' ')[1];
-	// 			const decoded = new Buffer(encoded, 'base64')
-	// 			                  .toString('utf8')
-	// 			                  .split(":");
-	// 			users
-	// 			.findOne({username: decoded[0], token: decoded[1]})
-	// 			.then(user => {
-	// 				if (user !== null && user.token_expiry > Date.now()) {
-	// 					next();
-	// 				} else {
-	// 					resJson(res, status.ERR, "Authentication failed");
-	// 				}
-	// 			})
-	// 			.catch(routeError(res));
-	// 		} else {
-	// 			resJson(res, status.ERR, "Authentication required");
-	// 		}
-	// 	} else {
-	// 		next();
-	// 	}
-	// });
+	router.use(
+		["/auth", "/applications", "/applications/:app_slug",
+		"/applications/:app_slug/updates",
+		"/applications/:app_slug/updates/:upd_id"],
+		(req, res, next) => {
+		// Authenticate after every request
+		if (req.headers.authorization) {
+			const encoded = req.headers.authorization.split(' ')[1];
+			const decoded = new Buffer(encoded, 'base64')
+			                  .toString('utf8')
+			                  .split(":");
+			users
+			.findOne({username: decoded[0], token: decoded[1]})
+			.then(user => {
+				if (user !== null) {
+					// If the token hasn't expired, or it's the application user
+					// attempting to login, let them through.
+					if (user.token_expiry > Date.now() ||
+					    user.is_application === true) {
+						next();
+					} else {
+						resJson(res, status.ERR, "Token expired. Log in again");
+					}
+				} else {
+					resJson(res, status.ERR, "User doesn't exist");
+				}
+			})
+			.catch(routeError(res));
+		} else {
+			resJson(res, status.ERR, "Authentication required");
+		}
+	});
 
 	// When the homepage is requested just print it was successful
 	router.get("/", (req, res) => resJson(res, status.SUC));
@@ -171,6 +179,9 @@ module.exports = (db, cf, io) => {
 				// Also hash the provided password for the new user.
 				genPassword(username, password, (values, err) => {
 					if (err) routeError(res)(err);
+
+					values.is_application = req.body.is_application || false;
+
 					users
 					.insert(values)
 					.then(done => {
@@ -204,16 +215,28 @@ module.exports = (db, cf, io) => {
 				// Generate a new password and update the DB fields
 				genPassword(username, password, (values, err) => {
 					if (err) routeError(res)(err);
+					// First update the other users so they are not
+					// an application user
 					users
-					.update({username: username}, values)
-					.then(result => resJson(res, status.SUC, result))
+					.update(
+					    {username: { $ne: username }},
+					    {$set: { is_application: false }},
+					    false, true)
+					.then(prelim_result => {
+						// Then update the user as intended
+						values.is_application = req.body.is_application || false;
+						users
+						.update({username: username}, values)
+						.then(result => resJson(res, status.SUC, result))
+						.catch(error => routeError(res));
+					})
 					.catch(error => routeError(res));
 				});
 			} else {
 				resJson(res, status.ERR, "User does not exist");
 			}
 		})
-		.catch(err => routeError(res));
+		.catch(routeError(res));
 	})
 	// Deleting an existing user
 	.delete((req, res) => {
@@ -232,7 +255,7 @@ module.exports = (db, cf, io) => {
 				resJson(res, status.ERR, "User does not exist to delete");
 			}
 		})
-		.catch(err => routeError(res));
+		.catch(routeError(res));
 	});
 
 	// Keep the applications db up to date after every request to the applications route
