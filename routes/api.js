@@ -23,12 +23,32 @@ module.exports = (db, cf, io) => {
 		"low", "med", "high"
 	];
 
-	// Routing and returning a response
-	const express = require("express");
-
 	// Create a router and make sure it prints details to the log
 	// after every request
-	const router = express.Router();
+	const router = require("express").Router();
+
+	// Middleware used for uploading images, moving them, and controlling their
+	// file size.
+	const multer = require("multer");
+	let storage = multer.diskStorage({
+		destination: (req, file, cb) => {
+			cb(null, "./upload-tmp/")
+		},
+		filename: (req, file, cb) => {
+			let ext = /^.+\.([^.]+)$/.exec(file.originalname);
+			cb(null, req.body.app_slug + (ext == null ? "" : "." + ext[1]));
+		}
+	});
+	let uploading = multer({
+		storage: storage,
+		limits: { files: 1 }
+	});
+
+	// Used for resizing images
+	const sharp = require("sharp");
+
+	// Used to delete temporary files after we are finished with them.
+	const fs = require('fs');
 
 	/*** ROUTING ***/
 
@@ -53,6 +73,16 @@ module.exports = (db, cf, io) => {
 			});
 		});
 	};
+
+	let resizeImage = (req, callback) => {
+		let file = req.files[0];
+		sharp(file.path)
+		.resize(512, 512)
+		.toFile("static/application-images/" + file.filename,
+		    err => {
+			callback(true);
+		});
+	}
 
 	router.use(
 		["/auth", "/applications", "/applications/:app_slug",
@@ -258,14 +288,15 @@ module.exports = (db, cf, io) => {
 		.catch(routeError(res));
 	});
 
-	// Keep the applications db up to date after every request to the applications route
+	// Keep the applications db up to date after every request
+	// to the applications route
 	router.use("/applications", (req, res, next) => {
 		db_app = db.get("applications");
 		next();
 	});
 
 	// Retrieve a list of applications and print them in an array
-	router.route("/applications")
+	router.route("/applications", uploading.any())
 	.get((req, res) => {
 		db_app
 		.find({})
@@ -277,15 +308,16 @@ module.exports = (db, cf, io) => {
 			}
 		})
 		.catch(routeError(res));
-	})
-	.post((req, res) => {
+	});
 
+	// Separate from the above route in order to use multer, so images
+	// can be processed and added properly to the database.
+	router.post("/applications", uploading.any(), (req, res) => {
 		let requirement = 0;
 		let requirement_threshold = 2;
 
 		if (req.body.app_slug) requirement++;
 		if (req.body.app_name) requirement++;
-		if (req.body.app_image) requirement++;
 		if (requirement < requirement_threshold) {
 			resJson(res, status.ERR,
 			        "Application name and slug required, image optional");
@@ -300,16 +332,33 @@ module.exports = (db, cf, io) => {
 			if (application) {
 				resJson(res, status.ERR, "Application already exists");
 			} else {
-				let values = {
-					slug: req.body.app_slug,
-					name: req.body.app_name,
-					image: req.body.app_image || "",
-					updates: []
+				let addToDB = (has_image) => {
+					let image = "";
+					if (has_image) {
+						image = "/static/application-images/" +
+						        req.files[0].filename;
+						fs.unlinkSync(req.files[0].path);
+					}
+
+					let values = {
+						slug: req.body.app_slug,
+						name: req.body.app_name,
+						image: image,
+						updates: []
+					};
+
+					db_app
+					.insert(values)
+					.then(result => {
+						resJson(res, status.SUC, "Application added");
+					})
+					.catch(routeError(res));
 				}
-				db_app
-				.insert(values)
-				.then(result => resJson(res, status.SUC, "Application added"))
-				.catch(routeError(res));
+				if (req.files.length > 0) {
+					resizeImage(req, addToDB);
+				} else {
+					addToDB(false);
+				}
 			}
 		})
 		.catch(routeError(res));
@@ -330,28 +379,6 @@ module.exports = (db, cf, io) => {
 		})
 		.catch(routeError(res));
 	})
-	.put((req, res) => {
-		let query = { slug: req.params.app_slug };
-
-		db_app
-		.findOne(query)
-		.then(application => {
-			if (application) {
-				let values = {
-					slug: application.slug,
-					name: req.body.app_name || application.name,
-					image: req.body.app_image || application.image,
-					updates: application.updates
-				}
-				db_app
-				.update(query, values)
-				.then(result => resJson(res, status.SUC, "Application updated"))
-				.catch(routeError(res));
-			} else {
-				resJson(res, status.ERR, "Application doesn't exist");
-			}
-		})
-	})
 	.delete((req, res) => {
 		let query = { slug: req.params.app_slug };
 
@@ -359,15 +386,62 @@ module.exports = (db, cf, io) => {
 		.findOne(query)
 		.then(application => {
 			if (application) {
-				db_app
-				.remove(query)
-				.then(result => resJson(res, status.SUC, "Application deleted"))
-				.catch(routeError(res));
+				console.log(application.image);
+				fs.unlink("." + application.image, () => {
+					db_app
+					.remove(query)
+					.then(result => {
+						resJson(res, status.SUC, "Application deleted");
+					})
+					.catch(routeError(res));
+				});
 			} else {
 				resJson(res, status.ERR, "Application doesn't exist");
 			}
 		})
+		.catch(routeError(res));
 	});
+
+	router.put("/applications/:app_slug", uploading.any(), (req, res) => {
+		let query = { slug: req.params.app_slug };
+
+		db_app
+		.findOne(query)
+		.then(application => {
+			if (application) {
+				let addToDB = (has_image) => {
+					let image = undefined;
+					if (has_image) {
+						image = "/static/application-images/" +
+						        req.files[0].filename;
+						fs.unlinkSync(req.files[0].path);
+					}
+
+					let values = {
+						slug: application.slug,
+						name: req.body.app_name || application.name,
+						image: image || application.image,
+						updates: application.updates
+					};
+					
+					db_app
+					.update(query, values)
+					.then(result => {
+						resJson(res, status.SUC, "Application updated")
+					})
+					.catch(routeError(res));
+				}
+				if (req.files.length > 0) {
+					resizeImage(req, addToDB);
+				} else {
+					addToDB(false);
+				}
+				
+			} else {
+				resJson(res, status.ERR, "Application doesn't exist");
+			}
+		})
+	})
 
 	// When a specific status is requested
 	router.route("/applications/:app_slug/updates")

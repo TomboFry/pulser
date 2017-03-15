@@ -14,40 +14,138 @@
 		<h1>Applications</h1>
 		<div id="applications">
 			<% applications.forEach((application) => { %>
-			<div onclick="deleteApplication('<%- application.slug %>')();" id="<%- application.slug %>" class="application <%= application.state %>">
+			<div id="<%- application.slug %>" class="application">
 				<div class="app-content">
+					<img class="app-image" src="<%= application.image %>" alt="<%= application.name %> Logo">
+					<a href="#" onclick="editApplication('<%- application.slug %>');" class="btn btn-delete">&#x270D;</a>
 					<h3 class="app-name"><%= application.name %></h3>
 					<p>Latest Updates:</p>
+					<div class="updates">
 					<% application.updates.forEach((update) => { %>
-						<div class="app-update">
-							<p class="app-meta">
-								<span class="app-state"><%= update.state %></span>
-								<span class="app-urgency"><%= update.urgency %></span>
-							</p>
-							<p class="app-text"><%= update.text %></p>
-							<% if (update.value !== "" && update.value !== 0) { %>
-							<div class="progress-bar">
-								<div class="app-progress" style="width: <%= update.value %>%;">
-									<span class="app-value"><%= update.value %></span>
-									<div class="value-overlay"></div>
+						<div onclick="deleteUpdate('<%- application.slug %>','<%- update._id %>')();" class="app-update <%= update.state %>">
+							<div class="app-update_cover">
+								<p class="upd-meta">
+									<span class="upd-state"><%= update.state %></span>
+									<span class="upd-urgency"><%= update.urgency %></span>
+								</p>
+								<p class="upd-text"><%= update.text %></p>
+								<% if (update.value !== "") { %>
+								<div class="progress-bar">
+									<div class="upd-progress" style="width: <%= update.value %>%;">
+										<span class="upd-value"><%= update.value %></span>
+										<div class="value-overlay"></div>
+									</div>
 								</div>
+								<% } %>
 							</div>
-							<% } %>
 						</div>
 					<% }) %>
+					</div>
 				</div>
 				<div class="app-cover"></div>
 			</div>
 			<% }) %>
 		</div>
 	</div>
+	<div id="modal">
+		<div id="modal-cover"></div>
+		<div id="modal-container">
+			<a href="#" onclick="closeModal();" id="modal_btn-close">✖</a>
+			<h2 id="modal-title"></h2>
+			<form id="frm_new-user" enctype="multipart/form-data">
+				<label for="app_name">Name:</label>
+				<input type="text" id="app_name" name="app_name"><br/>
+				<label for="app_slug">Slug:</label>
+				<input type="text" id="app_slug" name="app_slug"><br/>
+				<img id="app_image_src" src="" alt="">
+				<label for="app_image">Image (JPG or PNG, Max 2MB):</label>
+				<input type="file" id="app_image" name="app_image" accept="image/jpeg, image/png"><br/>
+
+				<span id="error_message"></span>
+				<input type="button" id="btn_add" value="Add" onclick="submitAddApplication();">
+				<input type="button" id="btn_upd" value="Update" onclick="submitUpdateApplication();">
+				<input type="button" id="btn_del" value="Delete" onclick="submitDeleteApplication();">
+				<input type="button" class="btn_show" value="Cancel" onclick="closeModal();">
+			</form>
+		</div>
+	</div>
 	<script>
 
+		function modalTextChange(elm_name, elm_slug) {
+			var slugHasChanged = false;
+			elm_name.oninput = function() {
+				if (!slugHasChanged) {
+					elm_slug.value = elm_name.value.toLowerCase().replace(/[^0-9a-z-_]/gi, '-');
+				}
+			};
+			elm_name.onpropertychange = elm_name.oninput;
+
+			elm_slug.oninput = function() { slugHasChanged = true; };
+			elm_slug.onpropertychange = elm_slug.oninput;
+		}
+
+		function newApplication() {
+			var body = document.getElementsByTagName('body')[0];
+			body.classList.add("show-modal");
+
+			var modal_title = document.getElementById('modal-title');
+			modal_title.innerText = "New Application";
+
+			var app_name = document.getElementById("app_name");
+			var app_slug = document.getElementById("app_slug");
+			var app_image = document.getElementById("app_image");
+
+			modalTextChange(app_name, app_slug);
+			formButtons(true, false, false);
+		}
+
+		function editApplication(slug) {
+			formButtons(false, true, true);
+
+			// Get the other application fields before displaying the modal
+			var elm_app = document.getElementById(slug);
+			console.log(elm_app);
+			var str_name = elm_app.getElementsByClassName('app-name')[0].innerText;
+			var str_image = elm_app.getElementsByClassName('app-image')[0].src;
+
+			// Now set up the modal elements
+			var body = document.getElementsByTagName('body')[0];
+			body.classList.add("show-modal");
+
+			var modal_title = document.getElementById('modal-title');
+			modal_title.innerText = "Edit Application";
+
+			var app_name = document.getElementById("app_name");
+			var app_slug = document.getElementById("app_slug");
+			var app_image = document.getElementById("app_image");
+			var app_image_src = document.getElementById("app_image_src");
+
+			app_name.value = str_name;
+			app_slug.value = slug;
+			app_image_src.src = str_image;
+
+			app_slug.setAttribute("disabled", true);
+
+			modalTextChange(app_name, app_slug);
+		}
+
 		function deleteApplication(id) {
+			if (confirm("Are you sure you want to delete the application '" + id + "'? All updates for this application will be lost forever.")) {
+				sendRequest("/api/applications/" + id, "DELETE", undefined, function(res, err) {
+					if (err) {
+						alert(err);
+					} else {
+						window.location.reload();
+					}
+				});
+			}
+		}
+
+		function deleteUpdate(app_slug, objectId) {
 			return function() {
-				var pretty = id.replace('%20', ' ');
-				if (confirm("Are you sure you want to delete the application '" + pretty + "'? All updates for this application will be lost forever.")) {
-					sendRequest("/api/applications/" + id, "DELETE", undefined, function(res, err) {
+				console.log(app_slug, objectId);
+				if (confirm("Are you sure you want to remove this update?")) {
+					sendRequest("/api/applications/" + app_slug + "/updates/" + objectId, "DELETE", undefined, function(res, err) {
 						if (err) {
 							alert(err);
 						} else {
@@ -56,6 +154,105 @@
 					});
 				}
 			}
+		}
+
+		function formButtons(add, upd, del) {
+			var btn_add = document.getElementById('btn_add');
+			var btn_upd = document.getElementById('btn_upd');
+			var btn_del = document.getElementById('btn_del');
+
+			btn_add.classList.remove("btn_hide");
+			btn_upd.classList.remove("btn_hide");
+			btn_del.classList.remove("btn_hide");
+
+			btn_add.classList.remove("btn_show");
+			btn_upd.classList.remove("btn_show");
+			btn_del.classList.remove("btn_show");
+
+			btn_add.classList.add((add ? "btn_show" : "btn_hide"));
+			btn_upd.classList.add((upd ? "btn_show" : "btn_hide"));
+			btn_del.classList.add((del ? "btn_show" : "btn_hide"));
+		}
+
+		function validateInput() {
+			var error = "";
+			var app_name = document.getElementById("app_name");
+			var app_slug = document.getElementById("app_slug");
+			var error_message = document.getElementById('error_message');
+
+			app_name.classList.remove("error");
+			app_slug.classList.remove("error");
+
+			if (app_name.value == "") {
+				app_name.classList.add("error");
+				error += "Application name cannot be blank\n";
+			}
+
+			if (app_slug.value == "") {
+				app_slug.classList.add("error");
+				error += "Application slug cannot be blank\n";
+			}
+
+			error_message.innerText = error;
+
+			return error;
+		}
+
+		function submitAddApplication() {
+			submitApplication("POST", "/api/applications");
+		}
+		function submitUpdateApplication() {
+			var app_slug = document.getElementById('app_slug');
+			submitApplication("PUT", "/api/applications/" + app_slug.value);
+		}
+		function submitDeleteApplication() {
+			var app_slug = document.getElementById('app_slug');
+			deleteApplication(app_slug.value);
+		}
+
+		function submitApplication(method, url) {
+			if (validateInput() !== "") return false;
+
+			var app_name = document.getElementById('app_name');
+			var app_slug = document.getElementById('app_slug');
+			var app_image = document.getElementById('app_image');
+
+			var data = new FormData();
+			data.append("app_name", app_name.value);
+			data.append("app_slug", app_slug.value);
+			data.append("app_image", app_image.files[0]);
+
+			sendRequest(url, method, data, function(res, err) {
+				if (err) {
+					var error_message = document.getElementById('error_message');
+					error_message.innerText = err;
+				} else {
+					window.location.reload();
+				}
+			});
+		}
+
+		function closeModal() {
+			var app_name = document.getElementById('app_name');
+			var app_slug = document.getElementById('app_slug');
+			var app_image = document.getElementById('app_image');
+			var app_image_src = document.getElementById('app_image_src');
+
+			app_name.value = "";
+			app_slug.value = "";
+			app_image.value = "";
+			app_image_src.src = "";
+			app_slug.setAttribute("disabled", false);
+
+			var modal = document.getElementById('modal');
+			modal.classList.add("closing");
+
+			setTimeout(function() {
+				modal.classList.remove("closing");
+
+				var body = document.getElementsByTagName('body')[0];
+				body.classList.remove("show-modal");
+			}, 200);
 		}
 	</script>
 </body>

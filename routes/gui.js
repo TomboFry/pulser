@@ -55,19 +55,41 @@ module.exports = (db) => {
 		db_app
 		.find(query)
 		.then(applications => {
+			for (var i = 0; i < applications.length; i++) {
+				let updates = applications[i].updates;
+				applications[i].updates = updates.sort((a, b) => {
+					if (a.timestamp < b.timestamp) {
+						return 1;
+					}
+					if (a.timestamp < b.timestamp) {
+						return -1;
+					}
+					return 0;
+				});
+			}
 			res.render("pages/applications",
 				{
 					// Return the applications sorted by timestamp
 					// so the most recent module appears first
-					applications: applications/*.sort((a, b) => {
-						if (a.timestamp < b.timestamp) {
+					applications: applications.sort((a, b) => {
+						let timestamp_a = 0;
+						let timestamp_b = 0;
+
+						if (a.updates.length > 0) {
+							timestamp_a = a.updates[0].timestamp;
+						}
+						if (b.updates.length > 0) {
+							timestamp_b = b.updates[0].timestamp;
+						}
+
+						if (timestamp_a < timestamp_b) {
 							return 1;
 						}
-						if (a.timestamp > b.timestamp) {
+						if (timestamp_a > timestamp_b) {
 							return -1;
 						}
 						return 0;
-					})*/
+					})
 				}
 			);
 		})

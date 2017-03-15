@@ -14,83 +14,56 @@
 		}
 		// If we're on the module page, update the
 		// elements on the page in real-time
-		if (page == "modules" && module) {
+		if (page == "applications" && module) {
 			// Find all the modules
-			var mod_elms = document.getElementsByClassName("module");
-			var match = false;
+			var app_elms = document.getElementsByClassName("application");
 
 			// Check for a match, if there is an module with the same name
 			// as the one we just got.
-			for (var i = 0; i < mod_elms.length; i++) {
-				var mod = mod_elms[i];
-				var name = mod.getElementsByClassName("app-name")[0];
+			for (var i = 0; i < app_elms.length; i++) {
+				var mod = app_elms[i];
 				// If we have a match, update its values here and now
-				if (name.innerText == module.name) {
-					var text    = mod.getElementsByClassName("app-text")[0];
-					var value   = mod.getElementsByClassName("app-value")[0];
-					var state   = mod.getElementsByClassName("app-state")[0];
-					var urgency = mod.getElementsByClassName("app-urgency")[0];
-					var prog    = mod.getElementsByClassName("app-progress")[0];
+				console.log(mod.id, module.slug);
+				if (mod.id == module.slug) {
+					var upd = module.updates;
+					// Create a module element
+					var elm = createElement("div", [ "app-update", upd.state ]);
+					// Allow it to be deleted when clicked
+					elm.addEventListener("click", deleteUpdate(mod.id, upd._id));
+					// Create all the inside elements, such as name and state
+					var e_content = createElement("div", "app-update_cover");
+					var e_meta = createElement("p", "upd-meta");
+					var e_state = createElement("span", "upd-state", upd.state);
+					var e_urgency = createElement("span", "upd-urgency", upd.urgency);
+					var e_text = createElement("p", "upd-text", upd.text);
+					var e_progressbar = createElement("div", "progress-bar");
+					var e_progress = createElement("div", "upd-progress");
+					if (upd.value) {
+						e_progress.style.width = upd.value + "%";
+					}
+					var e_value = createElement("span", "upd-value", upd.value);
+					var e_overlay = createElement("div", "value-overlay");
 
-					text.innerText = module.text;
-					value.innerText = module.value;
-					prog.style.width = module.value + "%";
-					state.innerText = module.state;
-					mod.className = `module ${module.state}`;
-					urgency.innerText = module.urgency;
+					// Append all the elements to the correct places
+					e_meta.appendChild(e_state);
+					e_meta.appendChild(e_urgency);
 
-					match = true;
+					e_progress.appendChild(e_value);
+					e_progress.appendChild(e_overlay);
+
+					e_progressbar.appendChild(e_progress);
+
+					e_content.appendChild(e_meta);
+					e_content.appendChild(e_text);
+					e_content.appendChild(e_progressbar);
+
+					elm.appendChild(e_content);
+
+					// Insert the newly created element into the list of modules
+					var container = mod.getElementsByClassName('updates')[0];
+					container.insertBefore(elm, container.firstChild);
 					break;
 				}
-			}
-
-			// If there was no match
-			if (!match) {
-				// Create a module element
-				var elm = createElement("div", [ "module", module.state ]);
-				var escaped = module.name.replace(' ', '%20');
-				// Set its ID to the HTML escaped name
-				elm.setAttribute("id", escaped);
-				// Allow it to be deleted when clicked
-				elm.addEventListener("click", deleteModule(escaped));
-				// Create all the inside elements, such as name and state
-				var e_content = createElement("div", "app-content");
-				var e_name = createElement("h3", "app-name", module.name);
-				var e_meta = createElement("p", "app-meta");
-				var e_state = createElement("span", "app-state", module.state);
-				var e_urgency = createElement(
-					"span", "app-urgency", module.urgency
-				);
-				var e_text = createElement("p", "app-text", module.text);
-				var e_progressbar = createElement("div", "progress-bar");
-				var e_progress = createElement("div", "app-progress");
-				if (module.value) {
-					e_progress.style.width = `${module.value}%`;
-				}
-				var e_value = createElement("span", "app-value", module.value);
-				var e_overlay = createElement("div", "value-overlay");
-				var e_cover = createElement("div", "app-cover");
-
-				// Append all the elements to the correct places
-				e_meta.appendChild(e_state);
-				e_meta.appendChild(e_urgency);
-
-				e_progress.appendChild(e_value);
-				e_progress.appendChild(e_overlay);
-
-				e_progressbar.appendChild(e_progress);
-
-				e_content.appendChild(e_name);
-				e_content.appendChild(e_meta);
-				e_content.appendChild(e_text);
-				e_content.appendChild(e_progressbar);
-
-				elm.appendChild(e_content);
-				elm.appendChild(e_cover);
-
-				// Insert the newly created element into the list of modules
-				var container = document.getElementById('modules');
-				container.insertBefore(elm, container.firstChild);
 			}
 		}
 	});
@@ -143,9 +116,6 @@
 			callback(undefined, "Unknown connection error. Please try again");
 		};
 
-		// Make sure to let the server we're sending JSON to parse it properly
-		request.setRequestHeader('Content-Type', 'application/json');
-
 		// Also set the authorisation headers to allow access.
 		request.setRequestHeader(
 			'Authorization',
@@ -154,7 +124,12 @@
 
 		if (data == undefined) {
 			request.send();
+		} else if (data.constructor.name === "FormData"){
+			request.send(data);
 		} else {
+			// Make sure to let the server we're sending JSON to parse it properly
+			request.setRequestHeader("Content-Type", "application/json");
+			// Send the stringified version of the object we passed in
 			request.send(JSON.stringify(data));
 		}
 	}
@@ -212,6 +187,14 @@
 	background-color: #fff;
 	color: #2196f3;
 }
+.btn.btn-delete {
+	border: 1px solid #ff0000;
+	color: #ff0000;
+}
+.btn.btn-delete:hover {
+	background-color: #ff0000;
+	color: #fff;
+}
 * {
 	margin: 0;
 	padding: 0;
@@ -231,7 +214,8 @@ a {
 	text-decoration: none;
 }
 p {
-	margin-bottom: 16px;
+	margin-bottom: 0;
+	padding-bottom: 0;
 }
 h1, h2, h3, h4, h5, h6 { font-weight: 300; }
 h1 {
@@ -250,8 +234,15 @@ h6 { font-size: 16pt; }
 	max-width: 800px;
 	padding: 48px;
 }
-.app-text {
-	line-height: 1.618;
+
+.app-image, #modal #app_image_src {
+	float: left;
+	width: 64px;
+	height: 64px;
+	margin-right: 16px;
+}
+#modal #app_image_src[src=""] {
+	display: none;
 }
 .progress-bar {
 	height: 16px;
@@ -263,7 +254,7 @@ h6 { font-size: 16pt; }
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 	overflow: hidden;
 }
-.app-progress {
+.upd-progress {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -304,26 +295,48 @@ h6 { font-size: 16pt; }
 	);
 }
 
-.app-meta {
+.app-update {
+	position: relative;
+	height: 96px;
+	border-radius: 8px;
+	background-color: #ccc;
+	margin-top: 16px;
+}
+.upd-text {
+	line-height: 1.2;
+	width: calc(100% - 106px);
+	font-size: 16px;
+	height: 39px;
+	display: block;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-bottom: 8px;
+}
+.upd-meta {
 	/*opacity: 0.5;*/
 	color: #888;
 	position: absolute;
-	top: 0;
-	right: 0;
+	top: 16px;
+	right: 16px;
 	text-align: right;
-	font-size: 12pt;
+	font-size: 14px;
 	font-weight: 300;
+	line-height: 1.8;
+	width: 106px;
 }
-.app-state, .app-urgency {
+.upd-state, .upd-urgency {
 	display: block;
 }
-.app-state::before {
+.upd-state::before {
 	content: 'state: ';
 }
-.app-urgency::before {
+.upd-urgency::before {
 	content: 'urgency: ';
 }
-.app-value::after {
+.upd-value::after {
 	content: '%';
 }
 .application, .app-content > * {
@@ -336,9 +349,9 @@ h6 { font-size: 16pt; }
 		box-shadow 0.15s, -webkit-box-shadow 0.15s,
 		height 0.15s;
 	transition:
-	color 0.15s, background-color 0.15s,
-	box-shadow 0.15s, -webkit-box-shadow 0.15s,
-	height 0.15s;
+		color 0.15s, background-color 0.15s,
+		box-shadow 0.15s, -webkit-box-shadow 0.15s,
+		height 0.15s;
 	margin-bottom: 16px;
 }
 .app-content > *:last-child {
@@ -348,7 +361,7 @@ h6 { font-size: 16pt; }
 	position: relative;
 	z-index: 1;
 }
-.app-cover {
+.app-cover, .app-update_cover {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -362,8 +375,13 @@ h6 { font-size: 16pt; }
 	-o-transition: opacity 0.15s, background-color 0.15s;
 	transition: opacity 0.15s, background-color 0.15s;
 }
+.app-update_cover {
+	padding: 16px;
+	-webkit-box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+	box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+}
 .application {
-	padding: 24px;
+	padding: 16px;
 	background-color: #FFF;
 	border-radius: 8px;
 	-webkit-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
@@ -372,13 +390,13 @@ h6 { font-size: 16pt; }
 	color: #212121;
 	position: relative;
 }
-.application.progress {
+.app-update.progress {
 	background-color: #4FC3F7;
 }
-.application.finished {
+.app-update.finished {
 	background-color: #4caf50;
 }
-.application.failed, .application.failed .app-progress {
+.app-update.failed, .app-update.failed .upd-progress {
 	background-color: #f44336;
 }
 .application:hover {
@@ -437,5 +455,111 @@ input[type="button"].btn_show {
 }
 input[type="button"].btn_hide {
 	display: none;
+}
+
+/*
+	MODAL DIALOG
+*/
+
+#modal {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+}
+body.show-modal #modal {
+	display: block;
+	-webkit-animation: open_modal 0.2s linear;
+	-o-animation: open_modal 0.2s linear;
+	animation: open_modal 0.2s linear;
+}
+body.show-modal #modal.closing {
+	-webkit-animation: close_modal 0.2s linear;
+	-o-animation: close_modal 0.2s linear;
+	animation: close_modal 0.2s linear;
+}
+body.show-modal {
+	overflow:hidden;
+}
+#modal-cover {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 9998;
+}
+#modal_btn-close {
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	width: 24px;
+	height: 24px;
+	background-color: #D51E00;
+	border-radius: 50%;
+	text-align: center;
+	padding-top: 3px;
+	color: #fff;
+	border: 1px solid #D51E00;
+}
+#modal_btn-close:hover {
+	background-color: #fff;
+	color: #D51E00;
+}
+#modal-container {
+	z-index: 9999;
+	position: absolute;
+	max-width: 640px;
+	max-height: 416px;
+	height: 100%;
+	width: 100%;
+	background-color: #fff;
+	padding: 32px;
+	color: #333;
+	margin: auto;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	overflow: auto;
+	-webkit-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+#modal-title {
+	margin-bottom: 32px;
+}
+
+#modal label {
+	display: block;
+	margin-bottom: 4px;
+}
+#modal label.label-float {
+	display: inline-block;
+}
+#modal input[type="text"], 
+#modal input[type="password"] {
+	width: 100%;
+	font-size: 14pt;
+}
+
+@keyframes close_modal {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+@-webkit-keyframes close_modal {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+
+@keyframes open_modal {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@-webkit-keyframes open_modal {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 </style>

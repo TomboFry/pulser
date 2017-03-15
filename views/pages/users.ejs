@@ -3,7 +3,6 @@
 <head>
 	<title>Users</title>
 	<% include ../partials/head %>
-	<% include ../partials/head-users %>
 	<script>
 		page = "users";
 	</script>
@@ -43,7 +42,7 @@
 				<label for="password_confirm">Confirm Password:</label>
 				<input type="password" id="password_confirm" name="password_confirm"><br/>
 				<input type="checkbox" id="is_application" name="is_application" onclick="applicationUserWarning();">
-				<label for="is_application"> Application User (so this user can post updates)</label>
+				<label class="label-float" for="is_application">Application User (so this user can post updates)</label>
 				<span id="error_message"></span>
 				<input type="button" id="btn_add" value="Add" onclick="submitAddUser();">
 				<input type="button" id="btn_upd" value="Update" onclick="submitUpdateUser();">
