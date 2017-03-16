@@ -34,11 +34,15 @@ class ApplicationTableViewController: UITableViewController {
 						updates_array.append(mod!)
 					}
 					
+					// Sort the updates by timestamp, so the most recent always appears at the top
+					updates_array.sort(by: { $0.timestamp > $1.timestamp })
+					
 					let app = Application(slug: app_slug, name: app_name, image_url: app_image, updates: updates_array)
 					
 					self.applications.append(app)
+					
 					DispatchQueue.main.async(execute: {
-						self.reloadTable()
+						self.tableView.reloadData()
 					})
 				}
 
@@ -49,12 +53,9 @@ class ApplicationTableViewController: UITableViewController {
 	}
 
 	func reloadTable() {
-		// Sort the modules by timestamp, so the most recent always appears at the top
-		//applications.sort(by: { $0.timestamp > $1.timestamp })
-		
 		// Once the data has been retrieved
 		// Asychronously update/reload the table view to reflect the changes
-		self.tableView.reloadData()
+		
 	}
 
     override func viewDidLoad() {
@@ -90,8 +91,18 @@ class ApplicationTableViewController: UITableViewController {
 		
 		let app = applications[indexPath.row]
 		
+		if app.updates.count > 0 {
+			print(app.updates[0].text)
+			let upd = app.updates[0]
+			// TODO FIX PLS
+			cell.lblLatestUpdate.text = upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow() + ")"
+			cell.lblLatestUpdate.textColor = UIColor.darkText
+		} else {
+			cell.lblLatestUpdate.text = "No updates yet"
+			cell.lblLatestUpdate.textColor = UIColor.gray
+		}
+		
 		cell.lblAppName.text = app.name
-		cell.lblLatestUpdate.text = "Empty, for now"
 		cell.imgAppImage.image = app.image
 
         return cell as UITableViewCell
