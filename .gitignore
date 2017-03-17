@@ -5,4 +5,4 @@ npm-debug.log
 *.pbxuser
 project.xcworkspace/
 xcuserdata/
-
+static/application-images/

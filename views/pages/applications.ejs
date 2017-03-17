@@ -27,6 +27,7 @@
 								<p class="upd-meta">
 									<span class="upd-state"><%= update.state %></span>
 									<span class="upd-urgency"><%= update.urgency %></span>
+									<span title="<%= update.timestamp %>" class="upd-timeago"></span>
 								</p>
 								<p class="upd-text"><%= update.text %></p>
 								<% if (update.value !== "") { %>
@@ -70,6 +71,16 @@
 		</div>
 	</div>
 	<script>
+
+		function ready(fn) {
+			if (document.readyState != 'loading'){
+				fn();
+			} else {
+				document.addEventListener('DOMContentLoaded', fn);
+			}
+		}
+
+		ready(timeAgo("upd-timeago", 5));
 
 		function modalTextChange(elm_name, elm_slug) {
 			var slugHasChanged = false;

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="11759" systemVersion="15G1108" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <elements/>
+    <entity name="CD_Application" representedClassName="CD_Application" syncable="YES" codeGenerationType="class">
+        <attribute name="name" attributeType="String" syncable="YES"/>
+        <attribute name="slug" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CD_Update" representedClassName="CD_Update" syncable="YES" codeGenerationType="class"/>
+    <elements>
+        <element name="CD_Application" positionX="-63" positionY="-18" width="128" height="75"/>
+        <element name="CD_Update" positionX="-54" positionY="9" width="128" height="45"/>
+    </elements>
 </model>

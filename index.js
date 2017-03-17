@@ -41,9 +41,7 @@ monk(`${cf.MSERVER}:${cf.MPORT}/${cf.MDB}`)
 
 	// Run the server through the specified routes
 	app.use("/static/", express.static("static"));
-	app.get(/^\/$/, (req, res) => {
-		res.redirect("/gui/");
-	});
+	app.get(/^\/$/, (req, res) => res.redirect("/gui/"));
 	app.use("/api/",   api);
 	app.use("/gui/",   gui);
 

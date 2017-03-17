@@ -128,4 +128,24 @@ class Network {
 			UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true, completion: nil)
 		})
 	}
+	
+	static func parseUpdates(_ updates: [[String: Any]]?) -> [Module] {
+		var updates_array = [Module]()
+		for (_, update) in updates!.enumerated() {
+			let mod_text = update["text"] as! String
+			let mod_value = NSString(string: update["value"] as! String).floatValue
+			let mod_state = update["state"] as! String
+			let mod_urgency = update["urgency"] as! String
+			let mod_timestamp = update["timestamp"] as! Int
+			
+			let mod = Module(text: mod_text, value: mod_value, state: mod_state, urgency: mod_urgency, timestamp: mod_timestamp)
+			
+			updates_array.append(mod!)
+		}
+		
+		// Sort the updates by timestamp, so the most recent always appears at the top
+		updates_array.sort(by: { $0.timestamp > $1.timestamp })
+		
+		return updates_array
+	}
 }

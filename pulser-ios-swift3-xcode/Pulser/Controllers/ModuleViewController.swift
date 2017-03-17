@@ -12,6 +12,9 @@ class ModuleViewController: UITableViewController {
 	
 	@IBOutlet weak var navItem: UINavigationItem!
 	
+	weak var delegate: ApplicationTableViewController!
+	
+	var app_slug: String = ""
 	var modules: [Module] = []
 	var modules_previous: [Module] = []
 	let module_sections = [ "High Priority", "Medium Priority", "Low Priority" ]
@@ -19,32 +22,56 @@ class ModuleViewController: UITableViewController {
 	
 	func reloadTable() {
 		// Sort the modules by timestamp, so the most recent always appears at the top
-		//modules.sort(by: { $0.timestamp > $1.timestamp })
-		
-		// Once the data has been retrieved
-		// Asychronously update/reload the table view to reflect the changes
-		self.tableView.reloadData()
-	}
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-		
 		modules.sort(by: { $0.timestamp > $1.timestamp })
 		
 		for (_, element) in modules.enumerated() {
 			var index = 2
 			switch element.urgency {
-				case "low":
-					index = 2; break
-				case "med":
-					index = 1; break
-				case "high":
-					index = 0; break
-				default:
-					index = 2; break
+			case "low":
+				index = 2; break
+			case "med":
+				index = 1; break
+			case "high":
+				index = 0; break
+			default:
+				index = 2; break
 			}
 			modules_sorted[index].append(element)
 		}
+		
+		// Once the data has been retrieved
+		// Asychronously update/reload the table view to reflect the changes
+		DispatchQueue.main.async {
+			self.tableView.reloadData()
+		}
+	}
+	
+	func refreshUpdates(_ sender: UIRefreshControl) {
+		modules.removeAll()
+		modules_sorted.removeAll()
+		modules_sorted = Array(repeating: Array<Module>(), count: 3)
+		
+		Network.requestJSON("/api/applications/" + app_slug, method: Network.Method.GET, body: nil) { (res, err) in
+			if (err == nil && res != nil) {
+				let data = res?["data"] as! [String:Any]
+				let updates = data["updates"] as! [[String:Any]]
+				
+				self.modules = Network.parseUpdates(updates)
+				
+				self.delegate.getUpdates(self.app_slug, updates: self.modules)
+				
+				sender.endRefreshing()
+				self.reloadTable()
+			}
+		}
+	}
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+		reloadTable()
+		
+		self.refreshControl?.addTarget(self, action: #selector(ModuleViewController.refreshUpdates(_:)), for: UIControlEvents.valueChanged)
     }
 
     override func didReceiveMemoryWarning() {

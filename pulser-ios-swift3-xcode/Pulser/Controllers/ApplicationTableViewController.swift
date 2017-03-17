@@ -12,38 +12,27 @@ class ApplicationTableViewController: UITableViewController {
 	
 	var applications = [Application]();
 	
-	func getApplications() {
-		Network.requestJSON("/api/applications", method: Network.Method.GET, body: nil) { (result, err) in
-			if (err == nil && result != nil) {
-				let data = result?["data"] as! [[String:Any]]
+	func getApplications(_ sender: UIRefreshControl) {
+		
+		// First, remove all the applications in the array.
+		applications.removeAll()
+		
+		Network.requestJSON("/api/applications", method: Network.Method.GET, body: nil) { (res, err) in
+			if (err == nil && res != nil) {
+				let data = res?["data"] as! [[String:Any]]
 				for (_, element) in data.enumerated() {
 					let app_slug = element["slug"] as! String
 					let app_name = element["name"] as! String
 					let app_image = element["image"] as! String
 					let updates = element["updates"] as! [[String:Any]]
-					var updates_array = [Module]()
-					for (_, update) in updates.enumerated() {
-						let mod_text = update["text"] as! String
-						let mod_value = NSString(string: update["value"] as! String).floatValue
-						let mod_state = update["state"] as! String
-						let mod_urgency = update["urgency"] as! String
-						let mod_timestamp = update["timestamp"] as! Int
-						
-						let mod = Module(text: mod_text, value: mod_value, state: mod_state, urgency: mod_urgency, timestamp: mod_timestamp)
-						
-						updates_array.append(mod!)
-					}
-					
-					// Sort the updates by timestamp, so the most recent always appears at the top
-					updates_array.sort(by: { $0.timestamp > $1.timestamp })
+					let updates_array: [Module] = Network.parseUpdates(updates)
 					
 					let app = Application(slug: app_slug, name: app_name, image_url: app_image, updates: updates_array)
 					
 					self.applications.append(app)
 					
-					DispatchQueue.main.async(execute: {
-						self.tableView.reloadData()
-					})
+					sender.endRefreshing()
+					self.reloadTable()
 				}
 
 			} else {
@@ -51,17 +40,30 @@ class ApplicationTableViewController: UITableViewController {
 			}
 		}
 	}
-
+	
 	func reloadTable() {
-		// Once the data has been retrieved
-		// Asychronously update/reload the table view to reflect the changes
-		
+		DispatchQueue.main.async(execute: {
+			self.tableView.reloadData()
+		})
+	}
+	
+	func getUpdates(_ app_slug: String, updates: [Module]) {
+		for app in applications {
+			if app.slug == app_slug {
+				app.updates.removeAll()
+				app.updates = updates
+				break
+			}
+		}
+		reloadTable()
 	}
 
     override func viewDidLoad() {
         super.viewDidLoad()
 		
-		getApplications()
+		self.refreshControl?.addTarget(self, action: #selector(ApplicationTableViewController.getApplications(_:)), for: UIControlEvents.valueChanged)
+		
+		getApplications(self.refreshControl!)
 
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -94,8 +96,7 @@ class ApplicationTableViewController: UITableViewController {
 		if app.updates.count > 0 {
 			print(app.updates[0].text)
 			let upd = app.updates[0]
-			// TODO FIX PLS
-			cell.lblLatestUpdate.text = upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow() + ")"
+			cell.lblLatestUpdate.text = upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow() + ", " + upd.urgency + " priority)"
 			cell.lblLatestUpdate.textColor = UIColor.darkText
 		} else {
 			cell.lblLatestUpdate.text = "No updates yet"
@@ -116,6 +117,8 @@ class ApplicationTableViewController: UITableViewController {
 		let moduleVC = storyboard?.instantiateViewController(withIdentifier: "ModuleViewController") as! ModuleViewController
 		moduleVC.navItem.title = app.name
 		moduleVC.modules = app.updates
+		moduleVC.app_slug = app.slug
+		moduleVC.delegate = self
 		navigationController?.pushViewController(moduleVC, animated: true)
 	}
 
