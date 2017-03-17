@@ -20,14 +20,33 @@ class LoginViewController: UIViewController {
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
+
+//		CDImage.deleteAll(CDImage.self)
+//		CDUpdate.deleteAll(CDUpdate.self)
+//		CDApplication.deleteAll(CDApplication.self)
+		
+		let cd_images: [CDImage] = CDImage.fetchAll()
+		var totalSize = 0
+		for img in cd_images {
+			if img.data != nil {
+				totalSize += (img.data?.count)!
+			}
+		}
+		print("Images:", CDImage.count(CDImage.self), "(Total Size:", totalSize, ")")
+		print("Updates:", CDUpdate.count(CDUpdate.self))
+		print("Applications:", CDApplication.count(CDApplication.self))
 		
 		if Preferences.get("login_token") != nil {
 			Network.requestJSON("/api/auth", method: Network.Method.GET, body: nil, onCompletion: {(result, error) in
 				if error == nil && result != nil && result!["status"] as! String == "success" {
 					self.showApplications()
 				} else {
-					if error != nil {
-						Network.alert("Error occurred", message: error!)
+					let cd_apps: [CDApplication] = CDApplication.fetchAll()
+					if cd_apps.count > 0 {
+						Network.isOnline = false
+						self.showApplications()
+					} else {
+						Network.alert("Error occurred", message: error ?? "Unspecified error", viewController: nil)
 					}
 				}
 			})
@@ -74,12 +93,14 @@ class LoginViewController: UIViewController {
 				valid_count += 1
 			}
 		}
+		
 		if let username = txtUsername.text {
 			if !username.isEmpty {
 				Preferences.set("login_username", value: username)
 				valid_count += 1
 			}
 		}
+		
 		if let password = txtPassword.text {
 			if !password.isEmpty {
 				valid_count += 1
@@ -91,7 +112,6 @@ class LoginViewController: UIViewController {
 	}
 	
 	func showApplications() {
-		print("About to move to applications view")
 		DispatchQueue.main.async {
 			self.performSegue(withIdentifier: "login_complete_segue", sender: self)
 		}
@@ -108,7 +128,7 @@ class LoginViewController: UIViewController {
 				// Always hide the cancel button / activity indicator when we get a response.
 				self.setButtons(false)
 				if error != nil {
-					return Network.alert("Error Occurred", message: error!)
+					return Network.alert("Error Occurred", message: error!, viewController: nil)
 				}
 				
 				if (result != nil && result!["status"] as! String == "success") {

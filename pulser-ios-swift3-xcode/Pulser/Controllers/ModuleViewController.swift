@@ -20,9 +20,15 @@ class ModuleViewController: UITableViewController {
 	let module_sections = [ "High Priority", "Medium Priority", "Low Priority" ]
 	var modules_sorted: [[Module]] = Array(repeating: Array<Module>(), count: 3)
 	
+	var update_delete_row: IndexPath? = nil
+	
 	func reloadTable() {
 		// Sort the modules by timestamp, so the most recent always appears at the top
 		modules.sort(by: { $0.timestamp > $1.timestamp })
+		
+		// Empty the sorted array so we don't end up with duplicates on refreshing and deleting.
+		modules_sorted.removeAll()
+		modules_sorted = Array(repeating: Array<Module>(), count: 3)
 		
 		for (_, element) in modules.enumerated() {
 			var index = 2
@@ -48,15 +54,13 @@ class ModuleViewController: UITableViewController {
 	
 	func refreshUpdates(_ sender: UIRefreshControl) {
 		modules.removeAll()
-		modules_sorted.removeAll()
-		modules_sorted = Array(repeating: Array<Module>(), count: 3)
 		
 		Network.requestJSON("/api/applications/" + app_slug, method: Network.Method.GET, body: nil) { (res, err) in
 			if (err == nil && res != nil) {
 				let data = res?["data"] as! [String:Any]
 				let updates = data["updates"] as! [[String:Any]]
 				
-				self.modules = Network.parseUpdates(updates)
+				self.modules = Module.parseUpdates(updates)
 				
 				self.delegate.getUpdates(self.app_slug, updates: self.modules)
 				
@@ -65,6 +69,49 @@ class ModuleViewController: UITableViewController {
 			}
 		}
 	}
+	
+	func confirmDelete() {
+		let alert = UIAlertController(title: "Remove Module", message: "Are you sure you want to permanently delete this update?", preferredStyle: .actionSheet)
+		
+		let DeleteAction = UIAlertAction(title: "Delete", style: .destructive, handler: handleDelete)
+		let CancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: {(alert: UIAlertAction) in
+			self.update_delete_row = nil
+		})
+		
+		alert.addAction(DeleteAction)
+		alert.addAction(CancelAction)
+		
+		self.present(alert, animated: true, completion: nil)
+	}
+	
+	func handleDelete(_ alertAction: UIAlertAction) {
+		if let indexPath = update_delete_row {
+			let update = modules_sorted[indexPath.section][indexPath.row]
+			Network.requestJSON("/api/applications/\(app_slug)/updates/\(update.objectid)", method: Network.Method.DELETE, body: nil, onCompletion: {_, err in
+				if err != nil {
+					//self.gotoSettings()
+				} else {
+					DispatchQueue.main.async {
+						self.tableView.beginUpdates()
+						for (idx, md) in self.modules.enumerated() {
+							if md.objectid == update.objectid {
+								print("It's working!", md.objectid, update.objectid)
+								self.modules.remove(at: idx)
+								break
+							}
+						}
+						self.modules_sorted[indexPath.section].remove(at: indexPath.row)
+						self.tableView.deleteRows(at: [indexPath], with: .fade)
+						self.update_delete_row = nil
+						self.tableView.endUpdates()
+						self.reloadTable()
+					}
+				}
+			})
+		}
+	}
+	
+	// MARK: - Override Default Swift Methods
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -116,7 +163,8 @@ class ModuleViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
+			update_delete_row = indexPath
+            confirmDelete()
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
         }    

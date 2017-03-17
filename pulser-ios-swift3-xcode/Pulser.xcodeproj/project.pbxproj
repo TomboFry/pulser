@@ -30,6 +30,10 @@
 		E2E0DA121E72027700F7DFE5 /* state_ongoing.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */; };
 		E2E0DA131E72027700F7DFE5 /* state_progress.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0E1E72027700F7DFE5 /* state_progress.png */; };
 		E2E0DA151E7204BF00F7DFE5 /* Module.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0DA141E7204BF00F7DFE5 /* Module.swift */; };
+		E2F9E4201E7C0FAA006D4853 /* CDApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */; };
+		E2F9E4211E7C0FAA006D4853 /* CDImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41E1E7C0FAA006D4853 /* CDImage.swift */; };
+		E2F9E4221E7C0FAA006D4853 /* CDUpdate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41F1E7C0FAA006D4853 /* CDUpdate.swift */; };
+		E2FE68871E7CA789002D9C01 /* CDDeleteOnSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FE68851E7CA789002D9C01 /* CDDeleteOnSync.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,7 +49,7 @@
 		E207EEB01E6EA4AF009F21BB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E207EEB71E6EAE2B009F21BB /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		E2B1CF341E7AA7630075F11E /* MarqueeLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MarqueeLabel.swift; path = Classes/MarqueeLabel.swift; sourceTree = "<group>"; };
-		E2B46BB71E7AEE0200C18D05 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
+		E2B46BB71E7AEE0200C18D05 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataManager.swift; path = Pulser/Classes/CoreDataManager.swift; sourceTree = SOURCE_ROOT; };
 		E2CEBA571E76CA2900DF019A /* ApplicationTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ApplicationTableViewController.swift; path = Controllers/ApplicationTableViewController.swift; sourceTree = "<group>"; };
 		E2CEBA591E76D50900DF019A /* Application.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Application.swift; path = Classes/Application.swift; sourceTree = "<group>"; };
 		E2CEBA5B1E76DB6A00DF019A /* ApplicationTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ApplicationTableViewCell.swift; path = Controllers/ApplicationTableViewCell.swift; sourceTree = "<group>"; };
@@ -58,6 +62,10 @@
 		E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_ongoing.png; path = Assets/state_ongoing.png; sourceTree = "<group>"; };
 		E2E0DA0E1E72027700F7DFE5 /* state_progress.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_progress.png; path = Assets/state_progress.png; sourceTree = "<group>"; };
 		E2E0DA141E7204BF00F7DFE5 /* Module.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Module.swift; path = Classes/Module.swift; sourceTree = "<group>"; };
+		E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDApplication.swift; path = Models/CDApplication.swift; sourceTree = "<group>"; };
+		E2F9E41E1E7C0FAA006D4853 /* CDImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDImage.swift; path = Models/CDImage.swift; sourceTree = "<group>"; };
+		E2F9E41F1E7C0FAA006D4853 /* CDUpdate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDUpdate.swift; path = Models/CDUpdate.swift; sourceTree = "<group>"; };
+		E2FE68851E7CA789002D9C01 /* CDDeleteOnSync.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDDeleteOnSync.swift; path = Models/CDDeleteOnSync.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,7 +91,7 @@
 		E203957E1E70554800EF2D17 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				E2B46BB61E7AEDB900C18D05 /* Core Data */,
+				E2B46BB71E7AEE0200C18D05 /* CoreDataManager.swift */,
 				E203957F1E70556800EF2D17 /* Network.swift */,
 				E20395811E705BEE00EF2D17 /* Preferences.swift */,
 				E2E0DA141E7204BF00F7DFE5 /* Module.swift */,
@@ -116,6 +124,7 @@
 				E2E0DA091E72024800F7DFE5 /* Assets */,
 				E203957E1E70554800EF2D17 /* Classes */,
 				E207EEB61E6EAA5E009F21BB /* Controllers */,
+				E2F9E4041E7BF64F006D4853 /* Models */,
 				E203957D1E7053F800EF2D17 /* Storyboards */,
 				E207EEA11E6EA4AF009F21BB /* AppDelegate.swift */,
 				E207EEB01E6EA4AF009F21BB /* Info.plist */,
@@ -137,15 +146,6 @@
 			name = Controllers;
 			sourceTree = "<group>";
 		};
-		E2B46BB61E7AEDB900C18D05 /* Core Data */ = {
-			isa = PBXGroup;
-			children = (
-				E2B46BB71E7AEE0200C18D05 /* CoreDataManager.swift */,
-			);
-			name = "Core Data";
-			path = "Classes/Core Data";
-			sourceTree = "<group>";
-		};
 		E2E0DA091E72024800F7DFE5 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
@@ -157,6 +157,17 @@
 				E2E0DA0E1E72027700F7DFE5 /* state_progress.png */,
 			);
 			name = Assets;
+			sourceTree = "<group>";
+		};
+		E2F9E4041E7BF64F006D4853 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E2FE68851E7CA789002D9C01 /* CDDeleteOnSync.swift */,
+				E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */,
+				E2F9E41E1E7C0FAA006D4853 /* CDImage.swift */,
+				E2F9E41F1E7C0FAA006D4853 /* CDUpdate.swift */,
+			);
+			name = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -243,14 +254,18 @@
 				E2CEBA581E76CA2900DF019A /* ApplicationTableViewController.swift in Sources */,
 				E207EEA21E6EA4AF009F21BB /* AppDelegate.swift in Sources */,
 				E2E0DA061E72018200F7DFE5 /* ModuleViewController.swift in Sources */,
+				E2F9E4221E7C0FAA006D4853 /* CDUpdate.swift in Sources */,
 				E20395821E705BEE00EF2D17 /* Preferences.swift in Sources */,
 				E2CEBA5C1E76DB6A00DF019A /* ApplicationTableViewCell.swift in Sources */,
+				E2F9E4211E7C0FAA006D4853 /* CDImage.swift in Sources */,
 				E20395801E70556800EF2D17 /* Network.swift in Sources */,
 				E2E0DA151E7204BF00F7DFE5 /* Module.swift in Sources */,
 				E2CF7C8C1E7A98A100AB431D /* DateHelper.swift in Sources */,
 				E207EEAA1E6EA4AF009F21BB /* Pulser.xcdatamodeld in Sources */,
 				E2B46BB81E7AEE0200C18D05 /* CoreDataManager.swift in Sources */,
+				E2FE68871E7CA789002D9C01 /* CDDeleteOnSync.swift in Sources */,
 				E2E0DA081E7201E800F7DFE5 /* ModuleTableCell.swift in Sources */,
+				E2F9E4201E7C0FAA006D4853 /* CDApplication.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

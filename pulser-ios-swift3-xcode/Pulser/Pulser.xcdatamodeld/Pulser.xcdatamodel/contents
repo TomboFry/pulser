@@ -1,12 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="11759" systemVersion="15G1108" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="CD_Application" representedClassName="CD_Application" syncable="YES" codeGenerationType="class">
+    <entity name="CDApplication" representedClassName=".CDApplication" syncable="YES">
         <attribute name="name" attributeType="String" syncable="YES"/>
-        <attribute name="slug" attributeType="String" syncable="YES"/>
+        <attribute name="slug" attributeType="String" indexed="YES" syncable="YES"/>
+        <relationship name="image" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CDImage" inverseName="application" inverseEntity="CDImage" syncable="YES"/>
+        <relationship name="updates" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CDUpdate" inverseName="application" inverseEntity="CDUpdate" syncable="YES"/>
     </entity>
-    <entity name="CD_Update" representedClassName="CD_Update" syncable="YES" codeGenerationType="class"/>
+    <entity name="CDDeleteOnSync" representedClassName=".CDDeleteOnSync" syncable="YES">
+        <attribute name="objectid" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="CDImage" representedClassName=".CDImage" syncable="YES">
+        <attribute name="app_slug" attributeType="String" syncable="YES"/>
+        <attribute name="data" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES" syncable="YES"/>
+        <relationship name="application" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CDApplication" inverseName="image" inverseEntity="CDApplication" syncable="YES"/>
+    </entity>
+    <entity name="CDUpdate" representedClassName=".CDUpdate" syncable="YES">
+        <attribute name="objectid" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="state" attributeType="String" defaultValueString="created" regularExpressionString="(created|finished|ongoing|progress|failed)" syncable="YES"/>
+        <attribute name="text" attributeType="String" syncable="YES"/>
+        <attribute name="timestamp" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="urgency" attributeType="String" defaultValueString="low" regularExpressionString="(low|med|high)" syncable="YES"/>
+        <attribute name="value" optional="YES" attributeType="Float" minValueString="0" maxValueString="100" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <relationship name="application" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CDApplication" inverseName="updates" inverseEntity="CDApplication" syncable="YES"/>
+    </entity>
     <elements>
-        <element name="CD_Application" positionX="-63" positionY="-18" width="128" height="75"/>
-        <element name="CD_Update" positionX="-54" positionY="9" width="128" height="45"/>
+        <element name="CDApplication" positionX="-18" positionY="-54" width="128" height="103"/>
+        <element name="CDImage" positionX="-243" positionY="53" width="128" height="88"/>
+        <element name="CDUpdate" positionX="205" positionY="-7" width="128" height="150"/>
+        <element name="CDDeleteOnSync" positionX="-36" positionY="27" width="128" height="60"/>
     </elements>
 </model>

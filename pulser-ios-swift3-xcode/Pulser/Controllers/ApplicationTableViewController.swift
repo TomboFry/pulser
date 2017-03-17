@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreData
 
 class ApplicationTableViewController: UITableViewController {
 	
@@ -14,31 +15,152 @@ class ApplicationTableViewController: UITableViewController {
 	
 	func getApplications(_ sender: UIRefreshControl) {
 		
-		// First, remove all the applications in the array.
-		applications.removeAll()
-		
-		Network.requestJSON("/api/applications", method: Network.Method.GET, body: nil) { (res, err) in
-			if (err == nil && res != nil) {
-				let data = res?["data"] as! [[String:Any]]
-				for (_, element) in data.enumerated() {
-					let app_slug = element["slug"] as! String
-					let app_name = element["name"] as! String
-					let app_image = element["image"] as! String
-					let updates = element["updates"] as! [[String:Any]]
-					let updates_array: [Module] = Network.parseUpdates(updates)
+		// If we're in online mode (ie. we have a connection to the pulser server)
+		if Network.isOnline {
+			
+			// Make a request to the applications route to get all applications and their updates
+			Network.requestJSON("/api/applications", method: Network.Method.GET, body: nil) { (res, err) in
+				
+				// If the data we got was valid and didn't return an error
+				if (err == nil && res != nil) {
 					
-					let app = Application(slug: app_slug, name: app_name, image_url: app_image, updates: updates_array)
+					// First, remove all the applications in the array.
+					self.applications.removeAll()
 					
-					self.applications.append(app)
+					let data = res?["data"] as! [[String:Any]]
 					
-					sender.endRefreshing()
-					self.reloadTable()
+					// Firstly delete all the applications and updates from the Core Data
+					//let _: CDApplication? = CDApplication.deleteAll()
+					//let _: CDUpdate? = CDUpdate.deleteAll()
+					CDApplication.deleteAll(CDApplication.self)
+					CDUpdate.deleteAll(CDApplication.self)
+					
+					// Loop through all the applications returned in the JSON
+					for (_, element) in data.enumerated() {
+						
+						// Get the application's properties
+						let app_slug = element["slug"] as! String
+						let app_name = element["name"] as! String
+						let app_image = element["image"] as! String
+						let updates = element["updates"] as! [[String:Any]]
+						let updates_array: [Module] = Module.parseUpdates(updates)
+						
+						// Create an application
+						let app = Application(slug: app_slug, name: app_name, image: nil, updates: updates_array)
+						
+						// Also add it to Core Data
+						let cd_app: CDApplication = CDApplication.insert()
+						cd_app.slug = app_slug
+						cd_app.name = app_name
+						
+						// Check to see if an image already exists for this application
+						
+						// First, get all the images currently in Core Data
+						let cd_image_list: [CDImage] = CDImage.fetchAll()
+						var has_cd_image: CDImage? = nil
+						
+						// Loop through all the images in Core Data
+						for image in cd_image_list {
+							
+							// If we have a match, set the temporary image and break out of the loop
+							if image.app_slug == app_slug {
+								has_cd_image = image
+								break
+							}
+						}
+						
+						// If we didn't manage to find a matching image
+						if has_cd_image == nil {
+							
+							// Create an image with its properties
+							let cd_image: CDImage = CDImage.insert()
+							cd_image.app_slug = app_slug
+							cd_image.application = cd_app
+							
+							// Download the image data from the server
+							Network.request(app_image, method: Network.Method.GET, body: nil) { (img_data, img_err) in
+								if img_data != nil {
+									
+									// Set the image's data to what was downloaded
+									cd_image.data = img_data
+									print("Downloaded Image (\(cd_image.data?.count))")
+									cd_app.image = cd_image
+									app.cd_image = cd_image
+									
+									// Asynchronously update the UIImage in the application
+									app.updateImage()
+									// It's slow but the only way I know it'll actually save the image data?
+									CoreDataManager.saveContext()
+								}
+							}
+						} else {
+							// However, if there was an image, we'll set it and update the UIImage
+							has_cd_image?.application = cd_app
+							cd_app.image = has_cd_image
+							app.cd_image = has_cd_image
+							app.updateImage()
+						}
+						
+						// Finally, create all the Core Data updates
+						for update in updates_array {
+							
+							// Insert it into Core Data and set its properties
+							let cd_update: CDUpdate = CDUpdate.insert()
+							cd_update.text = update.text
+							cd_update.state = update.state
+							cd_update.value = update.value
+							cd_update.urgency = update.urgency
+							cd_update.objectid = update.objectid
+							cd_update.timestamp = Int32(update.timestamp)
+							cd_update.application = cd_app
+							
+							// Ensure that the relationship is set up properly too
+							cd_app.addToUpdates(cd_update)
+						}
+						
+						// Finally, add the application to the array of applications for the tableview
+						self.applications.append(app)
+					}
+					CDImage.emptyUnused(self.applications)
+				} else {
+					Network.alert("Server Error", message: "Couldn't get a list of applications from the server", viewController: self)
 				}
-
-			} else {
-				return Network.alert("Server Error", message: "Couldn't get a list of applications from the server")
+				
+				// After everything is finished, apply the Core Data to disk
+				CoreDataManager.saveContext()
+				sender.endRefreshing()
+				self.reloadTable()
 			}
+		} else {
+			applications.removeAll()
+			
+			// If we're in offline mode, get the information from Core Data instead
+			let apps: [CDApplication] = CDApplication.fetchAll()
+			for app_elm in apps {
+				
+				// Get both the updates in an application, and the image if there is one
+				let cd_updates = app_elm.updates?.allObjects as! [CDUpdate]
+				let cd_image = app_elm.image as CDImage?
+				print("")
+				print("Loading Core Data: CDImage Exists = \(cd_image != nil)")
+				print(" - CDImage Data Exists = \(cd_image?.data != nil)")
+				var updates: [Module] = []
+				
+				// Create the actual update/module instances
+				for upd in cd_updates {
+					updates.append(Module(text: upd.text!, value: upd.value, state: upd.state!, urgency: upd.urgency!, timestamp: Int(upd.timestamp), id: upd.objectid!)!)
+				}
+				
+				// Finally, convert it all into an Application instance and append it to the array
+				self.applications.append(Application(slug: app_elm.slug!, name: app_elm.name!, image: cd_image, updates: Module.sortUpdates(updates)))
+			}
+			sender.endRefreshing()
+			self.reloadTable()
 		}
+		
+		print("Oi!")
+		
+		// Finally, after everything is done, stop the refresh control from spinning and reload the table view with our application array.
 	}
 	
 	func reloadTable() {
@@ -61,8 +183,11 @@ class ApplicationTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 		
-		self.refreshControl?.addTarget(self, action: #selector(ApplicationTableViewController.getApplications(_:)), for: UIControlEvents.valueChanged)
-		
+		//if Network.isOnline {
+			self.refreshControl?.addTarget(self, action: #selector(ApplicationTableViewController.getApplications(_:)), for: UIControlEvents.valueChanged)
+		//} else {
+		//	self.refreshControl?.isEnabled = false
+		//}
 		getApplications(self.refreshControl!)
 
         // Uncomment the following line to preserve selection between presentations
@@ -94,13 +219,23 @@ class ApplicationTableViewController: UITableViewController {
 		let app = applications[indexPath.row]
 		
 		if app.updates.count > 0 {
-			print(app.updates[0].text)
 			let upd = app.updates[0]
-			cell.lblLatestUpdate.text = upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow() + ", " + upd.urgency + " priority)"
-			cell.lblLatestUpdate.textColor = UIColor.darkText
+			
+			let updTextString = upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow() + ", " + upd.urgency + " priority)"
+			let updTextLength = updTextString.characters.count
+			let updTextLocation = upd.text.characters.count
+			
+			let updateText = NSMutableAttributedString(string: updTextString)
+			
+			updateText.addAttribute(NSForegroundColorAttributeName, value: UIColor.darkText, range: NSRange(location: 0, length: updTextLocation))
+			
+			updateText.addAttribute(NSForegroundColorAttributeName, value: UIColor.gray, range: NSRange(location: updTextLocation, length: updTextLength - updTextLocation))
+			
+			cell.lblLatestUpdate.attributedText = updateText
 		} else {
 			cell.lblLatestUpdate.text = "No updates yet"
 			cell.lblLatestUpdate.textColor = UIColor.gray
+			cell.accessoryType = .none
 		}
 		
 		cell.lblAppName.text = app.name
@@ -114,12 +249,15 @@ class ApplicationTableViewController: UITableViewController {
 		
 		let app = applications[indexPath.row]
 		
-		let moduleVC = storyboard?.instantiateViewController(withIdentifier: "ModuleViewController") as! ModuleViewController
-		moduleVC.navItem.title = app.name
-		moduleVC.modules = app.updates
-		moduleVC.app_slug = app.slug
-		moduleVC.delegate = self
-		navigationController?.pushViewController(moduleVC, animated: true)
+		// Only let the user view an application's updates if there are actually any.
+		if app.updates.count > 0 {
+			let moduleVC = storyboard?.instantiateViewController(withIdentifier: "ModuleViewController") as! ModuleViewController
+			moduleVC.navItem.title = app.name
+			moduleVC.modules = app.updates
+			moduleVC.app_slug = app.slug
+			moduleVC.delegate = self
+			navigationController?.pushViewController(moduleVC, animated: true)
+		}
 	}
 
     /*

@@ -18,6 +18,8 @@ class Network {
 		case GET, POST, PUT, DELETE
 	}
 	
+	public static var isOnline = true
+	
 	static func request(_ path: String, method: Method, body: Dictionary<String, Any>?, onCompletion: @escaping DataResponse) {
 		let full_path = Preferences.get("login_server")! + path
 		
@@ -34,7 +36,6 @@ class Network {
 			if body != nil {
 				request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 				request.httpBody = try? JSONSerialization.data(withJSONObject: body!, options: [])
-				print(body!)
 			}
 			
 			// If needed you could add Authorization header value
@@ -56,10 +57,6 @@ class Network {
 				{
 					return onCompletion(nil, (error?.localizedDescription)!)
 				}
-				
-				// Print out response string
-				let responseString = NSString(data: data!, encoding: String.Encoding.utf8.rawValue)
-				print("responseString = \(responseString)")
 				
 				return onCompletion(data, nil)
 			}.resume()
@@ -112,12 +109,11 @@ class Network {
 		//let urlRegEx = "(?:(?:https?|ftp|file):\\/\\/|www\\.|ftp\\.)(?:\\([-A-Z0-9+&@#\\/%=~_|$?!:,.]*\\)|[-A-Z0-9+&@#\\/%=~_|$?!:,.])*(?:\\([-A-Z0-9+&@#\\/%=~_|$?!:,.]*\\)|[A-Z0-9+&@#\\/%=~_|$])"
 		let urlRegEx = "^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$"
 		let canopen = NSPredicate(format: "SELF MATCHES %@", urlRegEx).evaluate(with: url)
-		print("Can the can opener open the openable can?", canopen)
 		return canopen
 	}
 	
-	static func alert(_ title: String, message: String) {
-		DispatchQueue.main.async(execute: {
+	static func alert(_ title: String, message: String, viewController vc: UIViewController?) {
+		DispatchQueue.main.async {
 			// Create an alert controller
 			let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
 			
@@ -125,27 +121,11 @@ class Network {
 			alert.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
 			
 			// Display the alert
-			UIApplication.shared.keyWindow?.rootViewController?.present(alert, animated: true, completion: nil)
-		})
-	}
-	
-	static func parseUpdates(_ updates: [[String: Any]]?) -> [Module] {
-		var updates_array = [Module]()
-		for (_, update) in updates!.enumerated() {
-			let mod_text = update["text"] as! String
-			let mod_value = NSString(string: update["value"] as! String).floatValue
-			let mod_state = update["state"] as! String
-			let mod_urgency = update["urgency"] as! String
-			let mod_timestamp = update["timestamp"] as! Int
-			
-			let mod = Module(text: mod_text, value: mod_value, state: mod_state, urgency: mod_urgency, timestamp: mod_timestamp)
-			
-			updates_array.append(mod!)
+			var viewController = UIApplication.shared.keyWindow?.rootViewController
+			if vc != nil {
+				viewController = vc
+			}
+			viewController?.present(alert, animated: true, completion: nil)
 		}
-		
-		// Sort the updates by timestamp, so the most recent always appears at the top
-		updates_array.sort(by: { $0.timestamp > $1.timestamp })
-		
-		return updates_array
 	}
 }
