@@ -26,6 +26,8 @@ class ModuleViewController: UITableViewController {
 		// Sort the modules by timestamp, so the most recent always appears at the top
 		modules.sort(by: { $0.timestamp > $1.timestamp })
 		
+		self.delegate.getUpdates(self.app_slug, updates: self.modules)
+		
 		// Empty the sorted array so we don't end up with duplicates on refreshing and deleting.
 		modules_sorted.removeAll()
 		modules_sorted = Array(repeating: Array<Module>(), count: 3)
@@ -54,19 +56,24 @@ class ModuleViewController: UITableViewController {
 	
 	func refreshUpdates(_ sender: UIRefreshControl) {
 		modules.removeAll()
-		
-		Network.requestJSON("/api/applications/" + app_slug, method: Network.Method.GET, body: nil) { (res, err) in
-			if (err == nil && res != nil) {
-				let data = res?["data"] as! [String:Any]
-				let updates = data["updates"] as! [[String:Any]]
-				
-				self.modules = Module.parseUpdates(updates)
-				
-				self.delegate.getUpdates(self.app_slug, updates: self.modules)
-				
-				sender.endRefreshing()
-				self.reloadTable()
+		if Network.IsOnline {
+			Network.requestJSON("/api/applications/" + self.app_slug, method: .GET, body: nil) { (res, err) in
+				if (err == nil && res != nil) {
+					let data = res?["data"] as! [String:Any]
+					let updates = data["updates"] as! [[String:Any]]
+					
+					self.modules = Module.parseUpdates(updates)
+					self.reloadTable()
+					sender.endRefreshing()
+				} else {
+					sender.endRefreshing()
+					Network.IsOnline = false
+				}
 			}
+		} else {
+			self.modules = Module.fromCoreData(with: self.app_slug)
+			sender.endRefreshing()
+			self.reloadTable()
 		}
 	}
 	
@@ -87,27 +94,45 @@ class ModuleViewController: UITableViewController {
 	func handleDelete(_ alertAction: UIAlertAction) {
 		if let indexPath = update_delete_row {
 			let update = modules_sorted[indexPath.section][indexPath.row]
-			Network.requestJSON("/api/applications/\(app_slug)/updates/\(update.objectid)", method: Network.Method.DELETE, body: nil, onCompletion: {_, err in
-				if err != nil {
-					//self.gotoSettings()
-				} else {
-					DispatchQueue.main.async {
-						self.tableView.beginUpdates()
-						for (idx, md) in self.modules.enumerated() {
-							if md.objectid == update.objectid {
-								print("It's working!", md.objectid, update.objectid)
-								self.modules.remove(at: idx)
-								break
-							}
+			
+			let handleTable = {
+				DispatchQueue.main.async {
+					// Begin removing the module from the arrays and tableview
+					self.tableView.beginUpdates()
+					for (idx, md) in self.modules.enumerated() {
+						if md.objectid == update.objectid {
+							self.modules.remove(at: idx)
+							break
 						}
-						self.modules_sorted[indexPath.section].remove(at: indexPath.row)
-						self.tableView.deleteRows(at: [indexPath], with: .fade)
-						self.update_delete_row = nil
-						self.tableView.endUpdates()
-						self.reloadTable()
 					}
+					self.modules_sorted[indexPath.section].remove(at: indexPath.row)
+					self.tableView.deleteRows(at: [indexPath], with: .fade)
+					self.update_delete_row = nil
+					self.tableView.endUpdates()
+					self.reloadTable()
 				}
-			})
+			}
+			
+			if Network.IsOnline {
+				Network.requestJSON("/api/applications/\(app_slug)/updates/\(update.objectid)", method: .DELETE, body: nil, onCompletion: {_, err in
+					if (err != nil) {
+						Network.alert("Error occurred", message: err ?? "Could not delete this update from the server", viewController: self)
+					} else {
+						// Only remove the update if it was successfully removed from the server too
+						handleTable()
+					}
+				})
+			} else {
+				// Add a "DeleteOnSync" instance if in Offline Mode
+				let cd_delete: CDDeleteOnSync = CDDeleteOnSync.insert()
+				cd_delete.objectid = update.objectid
+				cd_delete.app_slug = app_slug
+				
+				CDUpdate.delete(CDUpdate.self, key: "objectid", value: update.objectid)
+				
+				CoreDataManager.saveContext()
+				handleTable()
+			}
 		}
 	}
 	
@@ -117,7 +142,6 @@ class ModuleViewController: UITableViewController {
         super.viewDidLoad()
 
 		reloadTable()
-		
 		self.refreshControl?.addTarget(self, action: #selector(ModuleViewController.refreshUpdates(_:)), for: UIControlEvents.valueChanged)
     }
 
@@ -138,7 +162,6 @@ class ModuleViewController: UITableViewController {
 		if (self.modules_sorted[section].count > 0) {
 			return self.module_sections[section]
 		} else { return nil }
-		
 	}
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -149,7 +172,7 @@ class ModuleViewController: UITableViewController {
 		cell.lblUpdateText.text = module.text
 		cell.imgState.image = module.image
 		cell.prgValue.progress = module.value / 100
-
+		cell.lblTimeAgo.text = Date(timeIntervalSince1970: TimeInterval(module.timestamp)).timeAgoSinceNow()
         return cell as UITableViewCell
     }
 

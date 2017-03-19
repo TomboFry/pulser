@@ -7,6 +7,7 @@
         <relationship name="updates" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CDUpdate" inverseName="application" inverseEntity="CDUpdate" syncable="YES"/>
     </entity>
     <entity name="CDDeleteOnSync" representedClassName=".CDDeleteOnSync" syncable="YES">
+        <attribute name="app_slug" attributeType="String" syncable="YES"/>
         <attribute name="objectid" attributeType="String" syncable="YES"/>
     </entity>
     <entity name="CDImage" representedClassName=".CDImage" syncable="YES">
@@ -15,18 +16,18 @@
         <relationship name="application" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CDApplication" inverseName="image" inverseEntity="CDApplication" syncable="YES"/>
     </entity>
     <entity name="CDUpdate" representedClassName=".CDUpdate" syncable="YES">
-        <attribute name="objectid" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="objectid" attributeType="String" syncable="YES"/>
         <attribute name="state" attributeType="String" defaultValueString="created" regularExpressionString="(created|finished|ongoing|progress|failed)" syncable="YES"/>
         <attribute name="text" attributeType="String" syncable="YES"/>
         <attribute name="timestamp" attributeType="Integer 32" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="urgency" attributeType="String" defaultValueString="low" regularExpressionString="(low|med|high)" syncable="YES"/>
-        <attribute name="value" optional="YES" attributeType="Float" minValueString="0" maxValueString="100" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="value" attributeType="Float" minValueString="0" maxValueString="100" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
         <relationship name="application" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CDApplication" inverseName="updates" inverseEntity="CDApplication" syncable="YES"/>
     </entity>
     <elements>
         <element name="CDApplication" positionX="-18" positionY="-54" width="128" height="103"/>
+        <element name="CDDeleteOnSync" positionX="-20" positionY="93" width="128" height="73"/>
         <element name="CDImage" positionX="-243" positionY="53" width="128" height="88"/>
-        <element name="CDUpdate" positionX="205" positionY="-7" width="128" height="150"/>
-        <element name="CDDeleteOnSync" positionX="-36" positionY="27" width="128" height="60"/>
+        <element name="CDUpdate" positionX="205" positionY="-7" width="128" height="148"/>
     </elements>
 </model>

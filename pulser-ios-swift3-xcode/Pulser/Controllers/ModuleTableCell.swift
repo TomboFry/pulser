@@ -13,6 +13,7 @@ class ModuleTableCell: UITableViewCell {
 	@IBOutlet weak var imgState: UIImageView!
 	@IBOutlet weak var prgValue: UIProgressView!
 	@IBOutlet weak var lblUpdateText: UITextView!
+	@IBOutlet weak var lblTimeAgo: UILabel!
 	
     override func awakeFromNib() {
         super.awakeFromNib()

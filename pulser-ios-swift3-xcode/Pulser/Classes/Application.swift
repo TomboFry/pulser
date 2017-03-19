@@ -37,4 +37,36 @@ class Application {
 		}
 	}
 	
+	static func sort(_ applications: [Application]) -> [Application] {
+		return applications.sorted(by: { (a, b) -> Bool in
+			var timestamp_a = 0;
+			var timestamp_b = 0;
+			
+			if (a.updates.count > 0) {
+				timestamp_a = a.updates[0].timestamp;
+			}
+			if (b.updates.count > 0) {
+				timestamp_b = b.updates[0].timestamp;
+			}
+			return timestamp_a > timestamp_b
+		})
+	}
+	
+	static func fromCoreData() -> [Application] {
+		var applications: [Application] = []
+		// If we're in offline mode, get the information from Core Data instead
+		let apps: [CDApplication] = CDApplication.fetchAll()
+		for app_elm in apps {
+			
+			// Get both the updates in an application, and the image if there is one
+			let cd_image = app_elm.image as CDImage?
+			
+			let updates = Module.fromCoreData(app_elm)
+			
+			// Finally, convert it all into an Application instance and append it to the array
+			applications.append(Application(slug: app_elm.slug, name: app_elm.name, image: cd_image, updates: Module.sortUpdates(updates)))
+		}
+		return applications
+	}
+	
 }

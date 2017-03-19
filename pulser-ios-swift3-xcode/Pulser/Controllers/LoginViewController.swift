@@ -24,6 +24,7 @@ class LoginViewController: UIViewController {
 //		CDImage.deleteAll(CDImage.self)
 //		CDUpdate.deleteAll(CDUpdate.self)
 //		CDApplication.deleteAll(CDApplication.self)
+//		CDDeleteOnSync.deleteAll(CDDeleteOnSync.self)
 		
 		let cd_images: [CDImage] = CDImage.fetchAll()
 		var totalSize = 0
@@ -32,18 +33,19 @@ class LoginViewController: UIViewController {
 				totalSize += (img.data?.count)!
 			}
 		}
-		print("Images:", CDImage.count(CDImage.self), "(Total Size:", totalSize, ")")
+		print("Images:", CDImage.count(CDImage.self), "(Total Size: \(totalSize))")
 		print("Updates:", CDUpdate.count(CDUpdate.self))
 		print("Applications:", CDApplication.count(CDApplication.self))
+		print("Delete On Sync:", CDDeleteOnSync.count(CDDeleteOnSync.self))
 		
 		if Preferences.get("login_token") != nil {
-			Network.requestJSON("/api/auth", method: Network.Method.GET, body: nil, onCompletion: {(result, error) in
+			Network.requestJSON("/api/auth", method: .GET, body: nil, onCompletion: {(result, error) in
 				if error == nil && result != nil && result!["status"] as! String == "success" {
 					self.showApplications()
 				} else {
 					let cd_apps: [CDApplication] = CDApplication.fetchAll()
 					if cd_apps.count > 0 {
-						Network.isOnline = false
+						Network.IsOnline = false
 						self.showApplications()
 					} else {
 						Network.alert("Error occurred", message: error ?? "Unspecified error", viewController: nil)
@@ -124,7 +126,7 @@ class LoginViewController: UIViewController {
 			body["username"] = txtUsername.text!
 			body["password"] = txtPassword.text!
 			
-			Network.requestJSON("/api/login", method: Network.Method.POST, body: body, onCompletion: {(result, error) in
+			Network.requestJSON("/api/login", method: .POST, body: body, onCompletion: {(result, error) in
 				// Always hide the cancel button / activity indicator when we get a response.
 				self.setButtons(false)
 				if error != nil {

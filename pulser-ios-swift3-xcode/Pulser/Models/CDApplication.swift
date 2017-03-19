@@ -16,8 +16,8 @@ public class CDApplication: NSManagedObject {
 
 extension CDApplication {
 	
-	@NSManaged public var name: String?
-	@NSManaged public var slug: String?
+	@NSManaged public var name: String
+	@NSManaged public var slug: String
 	@NSManaged public var image: CDImage?
 	@NSManaged public var updates: NSSet?
 	

@@ -18,14 +18,25 @@ class Network {
 		case GET, POST, PUT, DELETE
 	}
 	
-	public static var isOnline = true
+	private static var isOnline = true
+	
+	public static var IsOnline: Bool {
+		get { return self.isOnline }
+		set {
+			self.isOnline = newValue
+			
+			if self.isOnline {
+				CoreDataManager.deleteOnSync({ () -> (Void) in })
+			}
+		}
+	}
 	
 	static func request(_ path: String, method: Method, body: Dictionary<String, Any>?, onCompletion: @escaping DataResponse) {
 		let full_path = Preferences.get("login_server")! + path
 		
 		if let path_format: String = encodeURL(full_path) {
 			print("") // New line for neatness
-			print(path_format)
+			print(path_format, "(\(method.rawValue))")
 			
 			// Creaste URL Request
 			var request = URLRequest(url: URL(string: path_format)!)

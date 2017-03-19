@@ -31,6 +31,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 	func applicationWillEnterForeground(_ application: UIApplication) {
 		// Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+		
+		// Check to see if we're still in offline mode
+		Network.requestJSON("/api/auth", method: Network.Method.GET, body: nil) { (data, err) in
+			// We got a response, that means it worked!
+			if (err == nil && data != nil) {
+				Network.IsOnline = true
+				// If we do happen to be online now, delete all the 
+			} else {
+				Network.IsOnline = false
+			}
+			print("App out of Background. Currently \(Network.IsOnline ? "online" : "offline")")
+		}
 	}
 
 	func applicationDidBecomeActive(_ application: UIApplication) {

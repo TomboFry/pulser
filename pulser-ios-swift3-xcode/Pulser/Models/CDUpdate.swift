@@ -16,11 +16,11 @@ public class CDUpdate: NSManagedObject {
 
 extension CDUpdate {
 	
-	@NSManaged public var text: String?
+	@NSManaged public var text: String
 	@NSManaged public var value: Float
-	@NSManaged public var state: String?
-	@NSManaged public var urgency: String?
-	@NSManaged public var objectid: String?
+	@NSManaged public var state: String
+	@NSManaged public var urgency: String
+	@NSManaged public var objectid: String
 	@NSManaged public var timestamp: Int32
 	@NSManaged public var application: CDApplication?
 	

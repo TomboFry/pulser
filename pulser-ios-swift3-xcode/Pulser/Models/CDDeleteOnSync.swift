@@ -13,6 +13,7 @@ public class CDDeleteOnSync: NSManagedObject {
 
 }
 
-extension CDDeleteOnSync {	
-	@NSManaged public var objectid: String?
+extension CDDeleteOnSync {
+	@NSManaged public var app_slug: String
+	@NSManaged public var objectid: String
 }

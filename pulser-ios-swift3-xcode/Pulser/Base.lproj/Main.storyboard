@@ -129,7 +129,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="342" height="67"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="state_finished.png" translatesAutoresizingMaskIntoConstraints="NO" id="G8f-po-yYh">
+                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="state_created.png" translatesAutoresizingMaskIntoConstraints="NO" id="G8f-po-yYh">
                                             <rect key="frame" x="4" y="4" width="58" height="58"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="58" id="FG8-aH-DBL"/>
@@ -196,7 +196,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Applications" id="XT2-QQ-gj2">
-                        <barButtonItem key="leftBarButtonItem" title="Logout" id="ML5-y2-jaj"/>
+                        <barButtonItem key="leftBarButtonItem" title="Item" id="ML5-y2-jaj"/>
                         <barButtonItem key="rightBarButtonItem" title="Settings" id="rSg-O0-hzd"/>
                     </navigationItem>
                     <refreshControl key="refreshControl" opaque="NO" multipleTouchEnabled="YES" contentMode="center" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" id="NYj-EV-U9m">
@@ -254,26 +254,39 @@
                                             <rect key="frame" x="85" y="67" width="282" height="2"/>
                                         </progressView>
                                         <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" horizontalCompressionResistancePriority="751" scrollEnabled="NO" editable="NO" text="Update Text, this text view has a lot of text inside it, which should hopefully appear on multiple lines" textAlignment="natural" selectable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ArG-qZ-e5l">
-                                            <rect key="frame" x="81" y="0.0" width="286" height="68.5"/>
+                                            <rect key="frame" x="81" y="0.0" width="247" height="69"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                             <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no"/>
                                             <dataDetectorType key="dataDetectorTypes" phoneNumber="YES" link="YES"/>
                                         </textView>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="99m" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Rht-7Q-Wgj">
+                                            <rect key="frame" x="331" y="8" width="36" height="21"/>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="21" id="8Nt-41-NxO"/>
+                                                <constraint firstAttribute="width" constant="36" id="Jpb-FQ-9kb"/>
+                                            </constraints>
+                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                            <nil key="textColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="ArG-qZ-e5l" firstAttribute="top" secondItem="irb-Fs-HfW" secondAttribute="top" id="4Z6-3i-IEv"/>
                                         <constraint firstItem="dRJ-6f-Pam" firstAttribute="leading" secondItem="irb-Fs-HfW" secondAttribute="leading" constant="85" id="AvS-rm-YQ8"/>
                                         <constraint firstAttribute="bottom" secondItem="ArG-qZ-e5l" secondAttribute="bottom" constant="8" id="D0i-FJ-mP7"/>
+                                        <constraint firstItem="Rht-7Q-Wgj" firstAttribute="trailing" secondItem="irb-Fs-HfW" secondAttribute="trailingMargin" id="J2l-jc-Rx0"/>
                                         <constraint firstItem="ArG-qZ-e5l" firstAttribute="leading" secondItem="OcX-UI-NQh" secondAttribute="trailing" constant="5" id="PjH-ja-wlt"/>
                                         <constraint firstAttribute="trailing" secondItem="dRJ-6f-Pam" secondAttribute="trailing" constant="8" id="Yhs-HW-5yK"/>
                                         <constraint firstItem="OcX-UI-NQh" firstAttribute="top" secondItem="irb-Fs-HfW" secondAttribute="top" id="kb7-HP-WJM"/>
                                         <constraint firstItem="OcX-UI-NQh" firstAttribute="leading" secondItem="irb-Fs-HfW" secondAttribute="leading" id="lFl-wu-5dz"/>
-                                        <constraint firstAttribute="trailing" secondItem="ArG-qZ-e5l" secondAttribute="trailing" constant="8" id="nU7-mL-vxM"/>
                                         <constraint firstAttribute="bottom" secondItem="dRJ-6f-Pam" secondAttribute="bottom" constant="7.5" id="s3y-mm-TwY"/>
+                                        <constraint firstItem="Rht-7Q-Wgj" firstAttribute="leading" secondItem="ArG-qZ-e5l" secondAttribute="trailing" constant="3" id="ts2-o8-7Wq"/>
+                                        <constraint firstItem="Rht-7Q-Wgj" firstAttribute="top" secondItem="irb-Fs-HfW" secondAttribute="topMargin" id="u62-ZK-Hke"/>
                                     </constraints>
                                 </tableViewCellContentView>
                                 <connections>
                                     <outlet property="imgState" destination="OcX-UI-NQh" id="Hed-ys-Ek4"/>
+                                    <outlet property="lblTimeAgo" destination="Rht-7Q-Wgj" id="wdx-qe-bY9"/>
                                     <outlet property="lblUpdateText" destination="ArG-qZ-e5l" id="QUw-Dg-Sj5"/>
                                     <outlet property="prgValue" destination="dRJ-6f-Pam" id="4TI-w6-i5i"/>
                                 </connections>
@@ -302,11 +315,14 @@
         <scene sceneID="b1l-Q5-INK">
             <objects>
                 <navigationController id="Map-eG-RlA" sceneMemberID="viewController">
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="B13-nH-0m5">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" misplaced="YES" id="B13-nH-0m5">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="backgroundColor" red="0.94455397129058838" green="0.022793054580688477" blue="0.15509310364723206" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="tintColor" red="0.94455397129058838" green="0.022793054580688477" blue="0.15509310364723206" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <textAttributes key="titleTextAttributes">
+                            <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                        </textAttributes>
                     </navigationBar>
                     <connections>
                         <segue destination="FaA-YJ-96p" kind="relationship" relationship="rootViewController" id="5yC-DX-gJD"/>
@@ -318,7 +334,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="state_created.png" width="2133" height="2133"/>
         <image name="state_failed.png" width="2133" height="2133"/>
-        <image name="state_finished.png" width="2133" height="2133"/>
     </resources>
 </document>

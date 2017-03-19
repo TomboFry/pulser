@@ -22,18 +22,13 @@ class Module {
 		self.image = UIImage(named: "state_" + self.state)!
 	}
 	
-	init?(text: String, value: Float?, state: String, urgency: String, timestamp: Int, id: String) {
+	init(text: String, value: Float, state: String, urgency: String, timestamp: Int, id: String) {
 		self.text = text
 		self.state = state
 		self.urgency = urgency
 		self.timestamp = timestamp
 		self.objectid = id
-		
-		if let value_nil = value {
-			self.value = value_nil
-		} else {
-			self.value = 0
-		}
+		self.value = value
 		
 		self.image = UIImage(named: "state_" + self.state)!
 	}
@@ -50,7 +45,7 @@ class Module {
 			
 			let mod = Module(text: mod_text, value: mod_value, state: mod_state, urgency: mod_urgency, timestamp: mod_timestamp, id: mod_id)
 			
-			updates_array.append(mod!)
+			updates_array.append(mod)
 		}
 		
 		// Sort the updates by timestamp, so the most recent always appears at the top
@@ -61,5 +56,32 @@ class Module {
 	
 	static func sortUpdates(_ updates: [Module]) -> [Module] {
 		return updates.sorted(by: { $0.timestamp > $1.timestamp })
+	}
+	
+	static func fromCoreData(_ app_elm: CDApplication) -> [Module] {
+		
+		let cd_updates = app_elm.updates?.allObjects as! [CDUpdate]
+		var updates: [Module] = []
+		
+		// Create the actual update/module instances
+		for upd in cd_updates {
+			updates.append(Module(text: upd.text, value: upd.value, state: upd.state, urgency: upd.urgency, timestamp: Int(upd.timestamp), id: upd.objectid))
+		}
+		
+		return self.sortUpdates(updates)
+	}
+	
+	static func fromCoreData(with slug: String) -> [Module] {
+		let cd_updates: [CDUpdate] = CDUpdate.fetchAll()
+		var updates: [Module] = []
+		
+		// Create the actual update/module instances
+		for upd in cd_updates {
+			if (upd.application?.slug == slug) {
+				updates.append(Module(text: upd.text, value: upd.value, state: upd.state, urgency: upd.urgency, timestamp: Int(upd.timestamp), id: upd.objectid))
+			}
+		}
+		
+		return self.sortUpdates(updates)
 	}
 }
