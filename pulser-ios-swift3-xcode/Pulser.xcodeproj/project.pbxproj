@@ -30,6 +30,7 @@
 		E2E0DA121E72027700F7DFE5 /* state_ongoing.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */; };
 		E2E0DA131E72027700F7DFE5 /* state_progress.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0E1E72027700F7DFE5 /* state_progress.png */; };
 		E2E0DA151E7204BF00F7DFE5 /* Module.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0DA141E7204BF00F7DFE5 /* Module.swift */; };
+		E2E823331E7F3A4D00CC88FB /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E823321E7F3A4D00CC88FB /* Notifications.swift */; };
 		E2F9E4201E7C0FAA006D4853 /* CDApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */; };
 		E2F9E4211E7C0FAA006D4853 /* CDImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41E1E7C0FAA006D4853 /* CDImage.swift */; };
 		E2F9E4221E7C0FAA006D4853 /* CDUpdate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41F1E7C0FAA006D4853 /* CDUpdate.swift */; };
@@ -62,6 +63,7 @@
 		E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_ongoing.png; path = Assets/state_ongoing.png; sourceTree = "<group>"; };
 		E2E0DA0E1E72027700F7DFE5 /* state_progress.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_progress.png; path = Assets/state_progress.png; sourceTree = "<group>"; };
 		E2E0DA141E7204BF00F7DFE5 /* Module.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Module.swift; path = Classes/Module.swift; sourceTree = "<group>"; };
+		E2E823321E7F3A4D00CC88FB /* Notifications.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Notifications.swift; path = Classes/Notifications.swift; sourceTree = "<group>"; };
 		E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDApplication.swift; path = Models/CDApplication.swift; sourceTree = "<group>"; };
 		E2F9E41E1E7C0FAA006D4853 /* CDImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDImage.swift; path = Models/CDImage.swift; sourceTree = "<group>"; };
 		E2F9E41F1E7C0FAA006D4853 /* CDUpdate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDUpdate.swift; path = Models/CDUpdate.swift; sourceTree = "<group>"; };
@@ -98,6 +100,7 @@
 				E2CEBA591E76D50900DF019A /* Application.swift */,
 				E2CF7C8B1E7A98A100AB431D /* DateHelper.swift */,
 				E2B1CF341E7AA7630075F11E /* MarqueeLabel.swift */,
+				E2E823321E7F3A4D00CC88FB /* Notifications.swift */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -249,6 +252,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2CEBA5A1E76D50900DF019A /* Application.swift in Sources */,
+				E2E823331E7F3A4D00CC88FB /* Notifications.swift in Sources */,
 				E207EEA41E6EA4AF009F21BB /* LoginViewController.swift in Sources */,
 				E2B1CF351E7AA7630075F11E /* MarqueeLabel.swift in Sources */,
 				E2CEBA581E76CA2900DF019A /* ApplicationTableViewController.swift in Sources */,

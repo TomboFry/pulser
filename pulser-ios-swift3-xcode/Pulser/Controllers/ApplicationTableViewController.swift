@@ -11,7 +11,16 @@ import CoreData
 
 class ApplicationTableViewController: UITableViewController {
 	
-	var applications = [Application]();
+	// The main place our applications and updates will be stored
+	var applications: [Application] = []
+	// This is used to test whether new updates were made to the server
+	// so we know what to put in the notifications (if any)
+	var applications_previous: [Application] = []
+	// This timer re-downloads all applications periodically in order
+	// to send out notifications
+	var timer: Timer = Timer()
+	
+	// MARK: - Application Updating
 	
 	func getApplications(_ sender: UIRefreshControl) {
 		
@@ -23,6 +32,10 @@ class ApplicationTableViewController: UITableViewController {
 				
 				// If the data we got was valid and didn't return an error
 				if (err == nil && res != nil) {
+					
+					// The main body of text when creating a notification (if any)
+					var notification_body = ""
+					self.applications_previous = self.applications
 					
 					// First, remove all the applications in the array.
 					self.applications.removeAll()
@@ -74,11 +87,11 @@ class ApplicationTableViewController: UITableViewController {
 							var cd_image: CDImage;
 							
 							if (has_cd_image == nil) {
-								print("There was not an image for \(app.slug))")
+								// print("There was not an image for \(app.slug))")
 								// Create an image with its properties
 								cd_image = CDImage.insert()
 							} else {
-								print("There was an image but it was empty... (for application: \(has_cd_image?.app_slug))")
+								// print("There was an image but it was empty... (for application: \(has_cd_image?.app_slug))")
 								cd_image = has_cd_image!
 							}
 							
@@ -132,6 +145,35 @@ class ApplicationTableViewController: UITableViewController {
 						self.applications.append(app)
 					}
 					
+					// After adding all the applications to the applications array
+					// we must loop through them all to detect for new updates
+					// (There *must* be a more efficient way to do this, surely?)
+					
+					for application_new in self.applications {
+						for application_old in self.applications_previous {
+							if application_new.slug == application_old.slug {
+								let set_new: Set<Module> = Set(application_new.updates)
+								let set_old: Set<Module> = Set(application_old.updates)
+								let result = set_new.subtracting(set_old)
+								for upd in result {
+									notification_body += application_new.name + ": " + upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow()
+									if upd.value > 0 {
+										notification_body += ", " + String(upd.value) + "%"
+									}
+									if upd.urgency == "high" {
+										notification_body += ", high priority"
+									}
+									notification_body += ")\n"
+								}
+								break
+							}
+						}
+					}
+					
+					if notification_body != "" {
+						Notifications.create(notification_body)
+					}
+					
 					CDImage.emptyUnused(self.applications)
 					CoreDataManager.saveContext()
 				} else {
@@ -172,23 +214,61 @@ class ApplicationTableViewController: UITableViewController {
 		}
 		reloadTable()
 	}
+	
+	func updateTimer() {
+		if let interval_string = Preferences.get("update_frequency") {
+			let timer_interval: Int = Int(interval_string)!
+			
+			print ("User preferences changed!", timer_interval)
+			
+			switch timer_interval {
+				case 0:
+					timer.invalidate()
+					break
+				case 1 ..< Int.max:
+					print ("Timer has been set for ")
+					timer = Timer.scheduledTimer(timeInterval: Double(timer_interval * 60), target: self, selector: #selector(ApplicationTableViewController.handleTimer), userInfo: nil, repeats: true)
+					break
+				default:
+					timer.invalidate()
+			}
+		}
+	}
+	
+	func handleTimer() {
+		getApplications(self.refreshControl!)
+	}
+	
+	// MARK: - Button Methods
+	
+	@IBAction func btnSettingsClick(_ sender: UIBarButtonItem) {
+		let settingsUrl = URL(string: UIApplicationOpenSettingsURLString)
+		if let url = settingsUrl {
+			// When the button is clicked, open the settings page for this app
+			UIApplication.shared.open(url, options: [:], completionHandler: nil)
+		}
+	}
+	
+	@IBAction func btnLogoutClick(_ sender: UIBarButtonItem) {
+		// Nothing, yet
+	}
+	
+	// MARK: - View Load
 
     override func viewDidLoad() {
         super.viewDidLoad()
 		
-		self.getApplications(self.refreshControl!)
-		self.refreshControl?.addTarget(self, action: #selector(ApplicationTableViewController.getApplications(_:)), for: UIControlEvents.valueChanged)
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem()
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+		getApplications(self.refreshControl!)
+		refreshControl?.addTarget(self, action: #selector(ApplicationTableViewController.getApplications(_:)), for: UIControlEvents.valueChanged)
+		
+		// Create an observer so that the fields are updated automatically as they are changed
+		NotificationCenter.default.addObserver(self,
+		    selector: #selector(ApplicationTableViewController.updateTimer),
+		    name: UserDefaults.didChangeNotification,
+		    object: nil)
+		
+		updateTimer()
+		
     }
 
     // MARK: - Table view data source
@@ -230,6 +310,10 @@ class ApplicationTableViewController: UITableViewController {
 		
 		cell.lblAppName.text = app.name
 		cell.imgAppImage.image = app.image
+		// These settings allow for rounded images
+		cell.imgAppImage.layer.masksToBounds = false
+		cell.imgAppImage.layer.cornerRadius = 6.0
+		cell.imgAppImage.clipsToBounds = true
 
         return cell as UITableViewCell
     }

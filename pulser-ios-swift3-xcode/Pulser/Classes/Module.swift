@@ -8,7 +8,7 @@
 
 import UIKit
 
-class Module {
+class Module: Hashable {
 	var text: String
 	var value: Float
 	var state: String
@@ -16,6 +16,10 @@ class Module {
 	var timestamp: Int
 	var image: UIImage
 	var objectid: String
+	
+	var hashValue: Int {
+		return self.objectid.characters.count
+	}
 	
 	internal func state(_ state: String) {
 		self.state = state
@@ -84,4 +88,8 @@ class Module {
 		
 		return self.sortUpdates(updates)
 	}
+}
+
+func ==(lhs: Module, rhs: Module) -> Bool {
+	return lhs.objectid == rhs.objectid
 }

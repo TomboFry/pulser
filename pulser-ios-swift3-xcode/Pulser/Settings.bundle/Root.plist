@@ -8,23 +8,17 @@
 	<array>
 		<dict>
 			<key>Type</key>
-			<string>PSGroupSpecifier</string>
-			<key>Title</key>
-			<string>Group</string>
-		</dict>
-		<dict>
-			<key>Type</key>
 			<string>PSTextFieldSpecifier</string>
 			<key>Title</key>
-			<string>Name</string>
+			<string>Server URL</string>
 			<key>Key</key>
-			<string>name_preference</string>
+			<string>login_server</string>
 			<key>DefaultValue</key>
 			<string></string>
 			<key>IsSecure</key>
 			<false/>
 			<key>KeyboardType</key>
-			<string>Alphabet</string>
+			<string>URL</string>
 			<key>AutocapitalizationType</key>
 			<string>None</string>
 			<key>AutocorrectionType</key>
@@ -32,29 +26,31 @@
 		</dict>
 		<dict>
 			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
+			<string>PSMultiValueSpecifier</string>
 			<key>Title</key>
-			<string>Enabled</string>
+			<string>Update Frequency</string>
 			<key>Key</key>
-			<string>enabled_preference</string>
+			<string>update_frequency</string>
 			<key>DefaultValue</key>
-			<true/>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSSliderSpecifier</string>
-			<key>Key</key>
-			<string>slider_preference</string>
-			<key>DefaultValue</key>
-			<real>0.5</real>
-			<key>MinimumValue</key>
-			<integer>0</integer>
-			<key>MaximumValue</key>
-			<integer>1</integer>
-			<key>MinimumValueImage</key>
 			<string></string>
-			<key>MaximumValueImage</key>
-			<string></string>
+			<key>Titles</key>
+			<array>
+				<string>Off</string>
+				<string>1 minute</string>
+				<string>5 minutes</string>
+				<string>10 minutes</string>
+				<string>30 minutes</string>
+				<string>1 hour</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<string>0</string>
+				<string>1</string>
+				<string>5</string>
+				<string>10</string>
+				<string>30</string>
+				<string>60</string>
+			</array>
 		</dict>
 	</array>
 </dict>

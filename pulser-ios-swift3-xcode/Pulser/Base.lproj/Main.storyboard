@@ -196,8 +196,16 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Applications" id="XT2-QQ-gj2">
-                        <barButtonItem key="leftBarButtonItem" title="Item" id="ML5-y2-jaj"/>
-                        <barButtonItem key="rightBarButtonItem" title="Settings" id="rSg-O0-hzd"/>
+                        <barButtonItem key="leftBarButtonItem" title="Item" id="ML5-y2-jaj">
+                            <connections>
+                                <action selector="btnLogoutClick:" destination="FaA-YJ-96p" id="3iM-4q-fBh"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" title="Settings" id="rSg-O0-hzd">
+                            <connections>
+                                <action selector="btnSettingsClick:" destination="FaA-YJ-96p" id="oGb-U9-sgL"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <refreshControl key="refreshControl" opaque="NO" multipleTouchEnabled="YES" contentMode="center" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" id="NYj-EV-U9m">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>

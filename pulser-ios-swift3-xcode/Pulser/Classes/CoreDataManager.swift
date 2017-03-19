@@ -17,7 +17,7 @@ class CoreDataManager {
 	
 	// MARK: - Core Data stack
 	
-	class func getContext() -> NSManagedObjectContext {
+	class var context: NSManagedObjectContext {
 		return CoreDataManager.persistentContainer.viewContext
 	}
 	
@@ -82,7 +82,7 @@ class CoreDataManager {
 			// A function to run when the Network stuff has finished
 			let removeCompleted = {
 				for elm in completed {
-					CoreDataManager.getContext().delete(elm)
+					context.delete(elm)
 				}
 				CoreDataManager.saveContext()
 				
@@ -121,7 +121,7 @@ extension NSManagedObject {
 	public class func fetchAll<T: NSManagedObject>() -> [T] {
 		let fetchRequest: NSFetchRequest<T> = T.getFetchRequest()
 		do {
-			return try CoreDataManager.getContext().fetch(fetchRequest)
+			return try CoreDataManager.context.fetch(fetchRequest)
 		}
 		catch {
 			print("Error: \(error)")
@@ -133,9 +133,9 @@ extension NSManagedObject {
 	public class func deleteAll<T: NSManagedObject>(_: T.Type) {
 		let fetchRequest: NSFetchRequest<T> = T.getFetchRequest()
 		do {
-			let searchResults = try CoreDataManager.getContext().fetch(fetchRequest)
+			let searchResults = try CoreDataManager.context.fetch(fetchRequest)
 			for app in searchResults {
-				CoreDataManager.getContext().delete(app)
+				CoreDataManager.context.delete(app)
 			}
 			CoreDataManager.saveContext()
 		}
@@ -147,10 +147,10 @@ extension NSManagedObject {
 	public class func delete<T: NSManagedObject>(_ type: T.Type, key: String, value: String) {
 		let fetchRequest: NSFetchRequest<T> = T.getFetchRequest()
 		do {
-			let searchResults = try CoreDataManager.getContext().fetch(fetchRequest)
+			let searchResults = try CoreDataManager.context.fetch(fetchRequest)
 			for app in searchResults {
 				if app.value(forKey: key) as! String == value {
-					CoreDataManager.getContext().delete(app)
+					CoreDataManager.context.delete(app)
 				}
 			}
 			CoreDataManager.saveContext()
@@ -162,14 +162,14 @@ extension NSManagedObject {
 	
 	// Create a new Core Data object that can be changed and applied to Core Data when context is saved
 	public class func insert<T: NSManagedObject>() -> T {
-		return NSEntityDescription.insertNewObject(forEntityName: String(describing: T.self), into: CoreDataManager.getContext()) as! T
+		return NSEntityDescription.insertNewObject(forEntityName: String(describing: T.self), into: CoreDataManager.context) as! T
 	}
 	
 	// Return the number of elements in Core Data of a specific type
 	public class func count<T: NSManagedObject>(_: T.Type) -> Int {
 		let fetchRequest: NSFetchRequest<T> = T.getFetchRequest()
 		do {
-			return try CoreDataManager.getContext().count(for: fetchRequest)
+			return try CoreDataManager.context.count(for: fetchRequest)
 		} catch let error as NSError {
 			print("Error: \(error.localizedDescription)")
 			return 0

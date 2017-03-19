@@ -19,7 +19,7 @@ extension CDImage {
 	class func emptyUnused(_ applications: [Application]) {
 		let fetchRequest: NSFetchRequest = CDImage.fetchRequest()
 		do {
-			let searchResults = try CoreDataManager.getContext().fetch(fetchRequest)
+			let searchResults = try CoreDataManager.context.fetch(fetchRequest)
 			for image in searchResults as! [CDImage] {
 				var appExists = false
 				for app in applications {
@@ -29,7 +29,7 @@ extension CDImage {
 					}
 				}
 				if !appExists {
-					CoreDataManager.getContext().delete(image)
+					CoreDataManager.context.delete(image)
 				}
 			}
 		}
