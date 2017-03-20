@@ -71,7 +71,7 @@
 	});
 	var page = "index";
 
-	function createElement(type, classes = undefined, it = undefined) {
+	function createElement(type, classes, it) {
 		// Create the element
 		var elm = document.createElement(type);
 
@@ -159,10 +159,11 @@
 			// If it does, make sure we have permission to send one
 			Notification.requestPermission(function (permission) {
 				if (permission === "granted") {
+					console.log(module)
 					var options = {
-						body: module.text + " (" + module.value +
-							  "% - " + module.urgency + " urgency)",
-						icon: "/static/state_" + module.state + ".png"
+						body: module.updates.text + " (" + module.updates.value +
+							  "% - " + module.updates.urgency + " urgency)",
+						icon: "/static/state_" + module.updates.state + ".png"
 					}
 					var notification = new Notification(module.name, options);
 				}
@@ -614,7 +615,7 @@ body.show-modal {
 #modal label.label-float {
 	display: inline-block;
 }
-#modal input[type="text"], 
+#modal input[type="text"],
 #modal input[type="password"] {
 	width: 100%;
 	font-size: 14pt;

@@ -212,6 +212,10 @@ module.exports = (db, cf, io) => {
 
 					values.is_application = req.body.is_application || false;
 
+					if (values.is_application) {
+						values.token = hat();
+					}
+
 					users
 					.insert(values)
 					.then(done => {
@@ -423,7 +427,7 @@ module.exports = (db, cf, io) => {
 						image: image || application.image,
 						updates: application.updates
 					};
-					
+
 					db_app
 					.update(query, values)
 					.then(result => {
@@ -436,7 +440,7 @@ module.exports = (db, cf, io) => {
 				} else {
 					addToDB(false);
 				}
-				
+
 			} else {
 				resJson(res, status.ERR, "Application doesn't exist");
 			}
@@ -514,6 +518,7 @@ module.exports = (db, cf, io) => {
 				// for push notifications
 				io.emit("module-update", {
 					"slug": req.params.app_slug,
+					"name": application.name,
 					"updates": values
 				});
 
