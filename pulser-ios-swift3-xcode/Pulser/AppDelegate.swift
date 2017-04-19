@@ -16,10 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 	var window: UIWindow?
 
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-		let center = UNUserNotificationCenter.current()
-		center.requestAuthorization(options: [.alert, .sound, .badge]) { (granted, error) in
+		
+		Notifications.center.requestAuthorization(options: [.alert, .sound, .badge]) { (granted, error) in
 			Notifications.granted = granted
 		}
+		
 		return true
 	}
 
@@ -37,15 +38,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 		// Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
 		
 		// Check to see if we're still in offline mode
-		Network.requestJSON("/api/auth", method: Network.Method.GET, body: nil) { (data, err) in
-			// We got a response, that means it worked!
-			if (err == nil && data != nil) {
-				Network.IsOnline = true
-				// If we do happen to be online now, delete all the 
-			} else {
-				Network.IsOnline = false
-			}
-			print("App out of Background. Currently \(Network.IsOnline ? "online" : "offline")")
+		Network.requestJSON("/api/auth", method: Network.Method.GET, body: nil).then { _ in
+			Network.IsOnline = true
+		}.catch { _ in
+			Network.IsOnline = false
 		}
 	}
 

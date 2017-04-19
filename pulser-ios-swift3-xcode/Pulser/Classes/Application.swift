@@ -31,7 +31,7 @@ class Application {
 	
 	func updateImage() {
 		DispatchQueue.main.async {
-			if self.cd_image != nil && self.cd_image?.data != nil {
+			if self.cd_image != nil {
 				self.image = UIImage(data: (self.cd_image?.data)!)
 			}
 		}

@@ -8,9 +8,13 @@
 
 import Foundation
 import UIKit
+import PromiseKit
 
-public typealias JSONResponse = (Dictionary<String, Any>?, String?) -> Void
-public typealias DataResponse = (Data?, String?) -> Void
+public typealias JSON = Dictionary<String, Any>
+
+public struct NetworkError: Error {
+	let message: String
+}
 
 class Network {
 	
@@ -31,7 +35,7 @@ class Network {
 		}
 	}
 	
-	static func request(_ path: String, method: Method, body: Dictionary<String, Any>?, onCompletion: @escaping DataResponse) {
+	static func request(_ path: String, method: Method, body: JSON?) -> Promise<Data> {
 		let full_path = Preferences.get("login_server")! + path
 		
 		if let path_format: String = encodeURL(full_path) {
@@ -59,43 +63,35 @@ class Network {
 				request.addValue(base64LoginString, forHTTPHeaderField: "Authorization")
 			}
 			
-			// Excute HTTP Request
-			URLSession.shared.dataTask(with: request) {
-				data, response, error in
-				
-				// Check for error
-				if error != nil
-				{
-					return onCompletion(nil, (error?.localizedDescription)!)
-				}
-				
-				return onCompletion(data, nil)
-			}.resume()
+			// Execute HTTP Request
+			return Promise { fulfill, reject in
+				URLSession.shared.dataTask(with: request) {
+					data, response, error in
+					// Check for error
+					if error != nil || data == nil {
+						reject(NetworkError(message: error!.localizedDescription))
+					} else {
+						fulfill(data!)
+					}
+				}.resume()
+			}
 		} else {
-			return onCompletion(nil, "For some reason, we weren't able to connect. Either there's a problem with the URL you provided, or it's just having trouble connecting.")
+			return Promise(error: NetworkError(message: "For some reason, we weren't able to connect. Either there's a problem with the URL you provided, or it's just having trouble connecting."))
 		}
 	}
 	
-	static func requestJSON(_ path: String, method: Method, body: Dictionary<String, Any>?, onCompletion: @escaping JSONResponse) {
+	static func requestJSON(_ path: String, method: Method, body: JSON?) -> Promise<JSON> {
 		
-		request(path, method: method, body: body) { (data, err) in
-			if data != nil && err == nil {
-				// Convert server json response to NSDictionary
-				do {
-					if let dict = try JSONSerialization.jsonObject(with: data!, options: []) as? Dictionary<String, Any> {
-						if dict["status"] as! String == "error" {
-							return onCompletion(nil, dict["data"] as? String)
-						} else {
-							return onCompletion(dict, nil)
-						}
-					} else {
-						return onCompletion(nil, "Could not parse response from server")
-					}
-				} catch let error as NSError {
-					return onCompletion(nil, error.localizedDescription)
+		return request(path, method: method, body: body).then { data -> Promise<JSON> in
+			// Convert server json response to NSDictionary
+			if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? JSON {
+				if dict["status"] as! String == "error" {
+					return Promise(error: NetworkError(message: dict["data"] as! String))
+				} else {
+					return Promise(value: dict)
 				}
 			} else {
-				return onCompletion(nil, err)
+				return Promise(error: NetworkError(message: "Could not parse response from server"))
 			}
 		}
 		

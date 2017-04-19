@@ -92,17 +92,15 @@ class CoreDataManager {
 			}
 			
 			for cd_delete in CDDeleteOnSync.fetchAll() as [CDDeleteOnSync] {
-				Network.requestJSON("/api/applications/\(cd_delete.app_slug)/updates/\(cd_delete.objectid)", method: Network.Method.DELETE, body: nil, onCompletion: { (data, err) in
+				Network.requestJSON("/api/applications/\(cd_delete.app_slug)/updates/\(cd_delete.objectid)", method: Network.Method.DELETE, body: nil).then { _ in
 					// Only delete the DoS element from Core Data if it was successfully removed server-side
-					if (err == nil && data != nil) {
-						completed.append(cd_delete)
-					}
-					
+					completed.append(cd_delete)
+				}.always {
 					currentCount += 1
 					if currentCount >= totalCount {
 						removeCompleted()
 					}
-				})
+				}
 			}
 		}
 	}

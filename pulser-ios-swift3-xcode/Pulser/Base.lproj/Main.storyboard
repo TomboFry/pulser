@@ -323,7 +323,7 @@
         <scene sceneID="b1l-Q5-INK">
             <objects>
                 <navigationController id="Map-eG-RlA" sceneMemberID="viewController">
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" misplaced="YES" id="B13-nH-0m5">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="B13-nH-0m5">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="backgroundColor" red="0.94455397129058838" green="0.022793054580688477" blue="0.15509310364723206" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

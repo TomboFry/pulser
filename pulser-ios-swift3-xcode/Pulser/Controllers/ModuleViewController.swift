@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import PromiseKit
 
 class ModuleViewController: UITableViewController {
 	
@@ -57,18 +58,17 @@ class ModuleViewController: UITableViewController {
 	func refreshUpdates(_ sender: UIRefreshControl) {
 		modules.removeAll()
 		if Network.IsOnline {
-			Network.requestJSON("/api/applications/" + self.app_slug, method: .GET, body: nil) { (res, err) in
-				if (err == nil && res != nil) {
-					let data = res?["data"] as! [String:Any]
-					let updates = data["updates"] as! [[String:Any]]
-					
-					self.modules = Module.parseUpdates(updates)
-					self.reloadTable()
-					sender.endRefreshing()
-				} else {
-					sender.endRefreshing()
-					Network.IsOnline = false
-				}
+			Network.requestJSON("/api/applications/" + self.app_slug, method: .GET, body: nil).then { result -> Promise<()> in
+				let data = result["data"] as! [String:Any]
+				let updates = data["updates"] as! [[String:Any]]
+				
+				self.modules = Module.parseUpdates(updates)
+				self.reloadTable()
+				sender.endRefreshing()
+				return Promise(value: ())
+			}.catch { _ in
+				sender.endRefreshing()
+				Network.IsOnline = false
 			}
 		} else {
 			self.modules = Module.fromCoreData(with: self.app_slug)
@@ -114,14 +114,12 @@ class ModuleViewController: UITableViewController {
 			}
 			
 			if Network.IsOnline {
-				Network.requestJSON("/api/applications/\(app_slug)/updates/\(update.objectid)", method: .DELETE, body: nil, onCompletion: {_, err in
-					if (err != nil) {
-						Network.alert("Error occurred", message: err ?? "Could not delete this update from the server", viewController: self)
-					} else {
-						// Only remove the update if it was successfully removed from the server too
-						handleTable()
-					}
-				})
+				Network.requestJSON("/api/applications/\(app_slug)/updates/\(update.objectid)", method: .DELETE, body: nil).then { _ in
+					// Only remove the update if it was successfully removed from the server too
+					handleTable()
+				}.catch { error in
+					Network.alert("Error occurred", message: error.localizedDescription, viewController: self)
+				}
 			} else {
 				// Add a "DeleteOnSync" instance if in Offline Mode
 				let cd_delete: CDDeleteOnSync = CDDeleteOnSync.insert()

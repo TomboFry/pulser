@@ -7,24 +7,25 @@
 //
 
 import UIKit
+import PromiseKit
 
 class LoginViewController: UIViewController {
 	
-	@IBOutlet weak var txtServerUrl: UITextField!
-	@IBOutlet weak var txtUsername: UITextField!
-	@IBOutlet weak var txtPassword: UITextField!
-	@IBOutlet weak var btnLogin: UIButton!
-	@IBOutlet weak var btnRegister: UIButton!
-	@IBOutlet weak var btnCancel: UIButton!
+	@IBOutlet weak var txtServerUrl:     UITextField!
+	@IBOutlet weak var txtUsername:      UITextField!
+	@IBOutlet weak var txtPassword:      UITextField!
+	@IBOutlet weak var btnLogin:         UIButton!
+	@IBOutlet weak var btnRegister:      UIButton!
+	@IBOutlet weak var btnCancel:        UIButton!
 	@IBOutlet weak var loadingIndicator: UIActivityIndicatorView!
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 
-//		CDImage.deleteAll(CDImage.self)
-//		CDUpdate.deleteAll(CDUpdate.self)
-//		CDApplication.deleteAll(CDApplication.self)
-//		CDDeleteOnSync.deleteAll(CDDeleteOnSync.self)
+		CDImage.deleteAll(CDImage.self)
+		CDUpdate.deleteAll(CDUpdate.self)
+		CDApplication.deleteAll(CDApplication.self)
+		CDDeleteOnSync.deleteAll(CDDeleteOnSync.self)
 		
 		let cd_images: [CDImage] = CDImage.fetchAll()
 		var totalSize = 0
@@ -39,19 +40,17 @@ class LoginViewController: UIViewController {
 		print("Delete On Sync:", CDDeleteOnSync.count(CDDeleteOnSync.self))
 		
 		if Preferences.get("login_token") != nil {
-			Network.requestJSON("/api/auth", method: .GET, body: nil, onCompletion: {(result, error) in
-				if error == nil && result != nil && result!["status"] as! String == "success" {
+			Network.requestJSON("/api/auth", method: .GET, body: nil).then { result in
+				self.showApplications()
+			}.catch { error in
+				let cd_apps: [CDApplication] = CDApplication.fetchAll()
+				if cd_apps.count > 0 {
+					Network.IsOnline = false
 					self.showApplications()
 				} else {
-					let cd_apps: [CDApplication] = CDApplication.fetchAll()
-					if cd_apps.count > 0 {
-						Network.IsOnline = false
-						self.showApplications()
-					} else {
-						Network.alert("Error occurred", message: error ?? "Unspecified error", viewController: nil)
-					}
+					Network.alert("Error occurred", message: error.localizedDescription, viewController: nil)
 				}
-			})
+			}
 		}
 		
 		if let url = Preferences.get("login_server") {
@@ -122,22 +121,21 @@ class LoginViewController: UIViewController {
 	@IBAction func btnLoginClick(_ sender: Any) {
 		setButtons(true);
 		if validateInput() {
-			var body: Dictionary<String, Any> = [:]
+			var body: JSON = [:]
 			body["username"] = txtUsername.text!
 			body["password"] = txtPassword.text!
 			
-			Network.requestJSON("/api/login", method: .POST, body: body, onCompletion: {(result, error) in
+			Network.requestJSON("/api/login", method: .POST, body: body).then { data -> Promise<()> in
+				Preferences.set("login_token", value: data["data"] as! String)
+				self.showApplications()
+				
+				return Promise(value: ())
+			}.catch { error in
+				return Network.alert("Error Occurred", message: error.localizedDescription, viewController: nil)
+			}.always {
 				// Always hide the cancel button / activity indicator when we get a response.
 				self.setButtons(false)
-				if error != nil {
-					return Network.alert("Error Occurred", message: error!, viewController: nil)
-				}
-				
-				if (result != nil && result!["status"] as! String == "success") {
-					Preferences.set("login_token", value: result!["data"] as! String)
-					self.showApplications()
-				}
-			})
+			}
 		}
 	}
 	

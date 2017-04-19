@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import PromiseKit
 
 class ApplicationTableViewController: UITableViewController {
 	
@@ -26,165 +27,158 @@ class ApplicationTableViewController: UITableViewController {
 		
 		// If we're in online mode (ie. we have a connection to the pulser server)
 		if Network.IsOnline {
-			
 			// Make a request to the applications route to get all applications and their updates
-			Network.requestJSON("/api/applications", method: Network.Method.GET, body: nil) { (res, err) in
+			Network.requestJSON("/api/applications", method: .GET, body: nil).then { res -> Promise<[Application]> in
+				self.applications_previous = self.applications
 				
-				// If the data we got was valid and didn't return an error
-				if (err == nil && res != nil) {
+				// First, remove all the applications in the array.
+				self.applications.removeAll()
+				
+				let data = res["data"] as! [[String:Any]]
+				
+				// Firstly delete all the applications and updates from the Core Data
+				CDApplication.deleteAll(CDApplication.self)
+				CDUpdate.deleteAll(CDApplication.self)
+				
+				return when(fulfilled: data.map { element -> Promise<Application> in
 					
-					// The main body of text when creating a notification (if any)
-					var notification_body = ""
-					self.applications_previous = self.applications
+					// Get the application's properties
+					let app_slug = element["slug"] as! String
+					let app_name = element["name"] as! String
+					let app_image = element["image"] as! String
+					let updates = element["updates"] as! [[String:Any]]
+					let updates_array: [Module] = Module.parseUpdates(updates)
 					
-					// First, remove all the applications in the array.
-					self.applications.removeAll()
+					// Create an application
+					let app = Application(slug: app_slug, name: app_name, image: nil, updates: updates_array)
 					
-					let data = res?["data"] as! [[String:Any]]
+					// Also add it to Core Data
+					let cd_app: CDApplication = CDApplication.insert()
+					cd_app.slug = app_slug
+					cd_app.name = app_name
 					
-					// Firstly delete all the applications and updates from the Core Data
-					CDApplication.deleteAll(CDApplication.self)
-					CDUpdate.deleteAll(CDApplication.self)
+					// Create all the Core Data updates
+					for update in updates_array {
+						
+						// Insert it into Core Data and set its properties
+						let cd_update: CDUpdate = CDUpdate.insert()
+						cd_update.text = update.text
+						cd_update.state = update.state
+						cd_update.value = update.value
+						cd_update.urgency = update.urgency
+						cd_update.objectid = update.objectid
+						cd_update.timestamp = Int32(update.timestamp)
+						cd_update.application = cd_app
+						
+						// Ensure that the relationship is set up properly too
+						cd_app.addToUpdates(cd_update)
+					}
 					
-					// Loop through all the applications returned in the JSON
-					for (_, element) in data.enumerated() {
+					// Check to see if an image already exists for this application
+					
+					// First, get all the images currently in Core Data
+					let cd_image_list: [CDImage] = CDImage.fetchAll()
+					var has_cd_image: CDImage? = nil
+					
+					// Loop through all the images in Core Data
+					for image in cd_image_list {
 						
-						// Get the application's properties
-						let app_slug = element["slug"] as! String
-						let app_name = element["name"] as! String
-						let app_image = element["image"] as! String
-						let updates = element["updates"] as! [[String:Any]]
-						let updates_array: [Module] = Module.parseUpdates(updates)
-						
-						// Create an application
-						let app = Application(slug: app_slug, name: app_name, image: nil, updates: updates_array)
-						
-						// Also add it to Core Data
-						let cd_app: CDApplication = CDApplication.insert()
-						cd_app.slug = app_slug
-						cd_app.name = app_name
-						
-						// Check to see if an image already exists for this application
-						
-						// First, get all the images currently in Core Data
-						let cd_image_list: [CDImage] = CDImage.fetchAll()
-						var has_cd_image: CDImage? = nil
-						
-						// Loop through all the images in Core Data
-						for image in cd_image_list {
-							
-							// If we have a match, set the temporary image and break out of the loop
-							if image.app_slug == app_slug {
-								has_cd_image = image
-								break
-							}
+						// If we have a match, set the temporary image and break out of the loop
+						if image.app_slug == app_slug {
+							has_cd_image = image
+							break
 						}
+					}
+					
+					// If we didn't manage to find a matching image
+					// Or the matching image is empty
+					if has_cd_image == nil || (has_cd_image != nil && has_cd_image?.data?.count == nil) {
 						
-						// If we didn't manage to find a matching image
-						// Or the matching image is empty
-						if has_cd_image == nil || (has_cd_image != nil && has_cd_image?.data?.count == nil) {
-							
-							var cd_image: CDImage;
-							
-							if (has_cd_image == nil) {
-								// print("There was not an image for \(app.slug))")
-								// Create an image with its properties
-								cd_image = CDImage.insert()
-							} else {
-								// print("There was an image but it was empty... (for application: \(has_cd_image?.app_slug))")
-								cd_image = has_cd_image!
-							}
-							
-							cd_image.app_slug = app_slug
-							cd_image.application = cd_app
-							
-							// Download the image data from the server
-							Network.request(app_image, method: Network.Method.GET, body: nil) { (img_data, img_err) in
-								if img_data != nil {
-									
-									// Set the image's data to what was downloaded
-									cd_image.data = img_data
-									print("Downloaded Image (\(cd_image.data?.count))")
-									cd_app.image = cd_image
-									app.cd_image = cd_image
-									
-									// Asynchronously update the UIImage in the application
-									app.updateImage()
-									
-									// It's slow but the only way I know it's guaranteed to actually save the image data?
-									CoreDataManager.saveContext()
-								}
-							}
+						var cd_image: CDImage
+						
+						if (has_cd_image == nil) {
+							// print("There was not an image for \(app.slug))")
+							// Create an image with its properties
+							cd_image = CDImage.insert()
 						} else {
-							// However, if there was an image, we'll set it and update the UIImage
-							print ("There was an image! (for application: \(cd_app.slug), size: \(has_cd_image?.data?.count))")
-							has_cd_image?.application = cd_app
-							cd_app.image = has_cd_image
-							app.cd_image = has_cd_image
-							app.updateImage()
+							// print("There was an image but it was empty... (for application: \(has_cd_image?.app_slug))")
+							cd_image = has_cd_image!
 						}
 						
-						// Finally, create all the Core Data updates
-						for update in updates_array {
+						cd_image.app_slug = app_slug
+						cd_image.application = cd_app
+						
+						// Download the image data from the server
+						return Network.request(app_image, method: .GET, body: nil).then { img_data -> Promise<Application> in
+							// Set the image's data to what was downloaded
+							cd_image.data = img_data
+							print("Downloaded Image (\(cd_image.data?.count))")
+							cd_app.image = cd_image
+							app.cd_image = cd_image
 							
-							// Insert it into Core Data and set its properties
-							let cd_update: CDUpdate = CDUpdate.insert()
-							cd_update.text = update.text
-							cd_update.state = update.state
-							cd_update.value = update.value
-							cd_update.urgency = update.urgency
-							cd_update.objectid = update.objectid
-							cd_update.timestamp = Int32(update.timestamp)
-							cd_update.application = cd_app
-							
-							// Ensure that the relationship is set up properly too
-							cd_app.addToUpdates(cd_update)
+							return Promise(value: app)
 						}
+					} else {
+						// However, if there was an image, we'll set it and update the UIImage
+						print ("There was an image! (for application: \(cd_app.slug), size: \(has_cd_image?.data?.count))")
+						has_cd_image?.application = cd_app
+						cd_app.image = has_cd_image
+						app.cd_image = has_cd_image
 						
 						// Finally, add the application to the array of applications for the tableview
-						self.applications.append(app)
+						return Promise(value: app)
 					}
+				})
+			}.then { apps -> Promise<()> in
+				self.applications = apps
+				
+				// The main body of text when creating a notification (if any)
+				var notification_body = ""
+				
+				// After adding all the applications to the applications array
+				// we must loop through them all to detect for new updates
+				// (There *must* be a more efficient way to do this, surely?)
+				
+				for application_new in self.applications {
+					// Asynchronously update the UIImage in the application
+					application_new.updateImage()
 					
-					// After adding all the applications to the applications array
-					// we must loop through them all to detect for new updates
-					// (There *must* be a more efficient way to do this, surely?)
-					
-					for application_new in self.applications {
-						for application_old in self.applications_previous {
-							if application_new.slug == application_old.slug {
-								let set_new: Set<Module> = Set(application_new.updates)
-								let set_old: Set<Module> = Set(application_old.updates)
-								let result = set_new.subtracting(set_old)
-								for upd in result {
-									notification_body += application_new.name + ": " + upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow()
-									if upd.value > 0 {
-										notification_body += ", " + String(upd.value) + "%"
-									}
-									if upd.urgency == "high" {
-										notification_body += ", high priority"
-									}
-									notification_body += ")\n"
+					for application_old in self.applications_previous {
+						if application_new.slug == application_old.slug {
+							let set_new: Set<Module> = Set(application_new.updates)
+							let set_old: Set<Module> = Set(application_old.updates)
+							let result = set_new.subtracting(set_old)
+							for upd in result {
+								notification_body += application_new.name + ": " + upd.text + " (" + Date(timeIntervalSince1970: TimeInterval(upd.timestamp)).timeAgoSinceNow()
+								if upd.value > 0 {
+									notification_body += ", " + String(upd.value) + "%"
 								}
-								break
+								if upd.urgency == "high" {
+									notification_body += ", high priority"
+								}
+								notification_body += ")\n"
 							}
+							break
 						}
 					}
-					
-					if notification_body != "" {
-						Notifications.create(notification_body)
-					}
-					
-					CDImage.emptyUnused(self.applications)
-					CoreDataManager.saveContext()
-				} else {
-					sender.endRefreshing()
-					Network.alert("Server Error", message: "Couldn't get a list of applications from the server", viewController: self)
-					Network.IsOnline = false
 				}
+				
+				if notification_body != "" {
+					Notifications.create(notification_body)
+				}
+				
+				CDImage.emptyUnused(self.applications)
+				CoreDataManager.saveContext()
 				
 				// After everything is finished, reload the table
 				sender.endRefreshing()
 				self.reloadTable()
+				
+				return Promise(value: ())
+			}.catch { err in
+				sender.endRefreshing()
+				Network.alert("Server Error", message: "Couldn't get a list of applications from the server", viewController: self)
+				Network.IsOnline = false
 			}
 		} else {
 			applications.removeAll()
