@@ -13,7 +13,7 @@
         <!--Login View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="LoginViewController" customModule="Pulser" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="LoginViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="BYZ-38-t0r" customClass="LoginViewController" customModule="Pulser" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -196,9 +196,9 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Applications" id="XT2-QQ-gj2">
-                        <barButtonItem key="leftBarButtonItem" title="Item" id="ML5-y2-jaj">
+                        <barButtonItem key="leftBarButtonItem" title="Logout" id="ML5-y2-jaj">
                             <connections>
-                                <action selector="btnLogoutClick:" destination="FaA-YJ-96p" id="3iM-4q-fBh"/>
+                                <segue destination="HDE-4O-pKi" kind="unwind" unwindAction="unwindToRootViewControllerWithSegue:" id="aXx-68-VV6"/>
                             </connections>
                         </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" title="Settings" id="rSg-O0-hzd">
@@ -212,10 +212,14 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <attributedString key="attributedTitle"/>
                     </refreshControl>
+                    <connections>
+                        <outlet property="btnLogInOut" destination="ML5-y2-jaj" id="9rp-Or-Giy"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="JCo-j6-hpT" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="HDE-4O-pKi" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
-            <point key="canvasLocation" x="1876" y="149.77511244377811"/>
+            <point key="canvasLocation" x="1905" y="150"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="SeZ-bO-NCs">
@@ -238,7 +242,7 @@
         <!--X Updates-->
         <scene sceneID="kBk-gG-tU5">
             <objects>
-                <tableViewController storyboardIdentifier="ModuleViewController" id="0xq-DO-R4h" customClass="ModuleViewController" customModule="Pulser" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="ModuleViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="0xq-DO-R4h" customClass="ModuleViewController" customModule="Pulser" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" sectionIndexMinimumDisplayRowCount="3" allowsSelectionDuringEditing="YES" rowHeight="77" sectionHeaderHeight="28" sectionFooterHeight="28" id="cTN-39-hAS">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -342,7 +346,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="state_created.png" width="2133" height="2133"/>
-        <image name="state_failed.png" width="2133" height="2133"/>
+        <image name="state_created.png" width="512" height="512"/>
+        <image name="state_failed.png" width="512" height="512"/>
     </resources>
 </document>

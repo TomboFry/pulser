@@ -30,10 +30,8 @@ class Application {
 	}
 	
 	func updateImage() {
-		DispatchQueue.main.async {
-			if self.cd_image != nil {
-				self.image = UIImage(data: (self.cd_image?.data)!)
-			}
+		if let img = self.cd_image {
+			self.image = UIImage(data: img.data!)
 		}
 	}
 	
@@ -53,6 +51,7 @@ class Application {
 	}
 	
 	static func fromCoreData() -> [Application] {
+		print("---- Starting CoreData Get")
 		var applications: [Application] = []
 		// If we're in offline mode, get the information from Core Data instead
 		let apps: [CDApplication] = CDApplication.fetchAll()

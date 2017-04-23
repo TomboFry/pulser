@@ -23,6 +23,10 @@ class ModuleViewController: UITableViewController {
 	
 	var update_delete_row: IndexPath? = nil
 	
+	deinit {
+		print("Deinit Updates")
+	}
+	
 	func reloadTable() {
 		// Sort the modules by timestamp, so the most recent always appears at the top
 		modules.sort(by: { $0.timestamp > $1.timestamp })
@@ -50,9 +54,7 @@ class ModuleViewController: UITableViewController {
 		
 		// Once the data has been retrieved
 		// Asychronously update/reload the table view to reflect the changes
-		DispatchQueue.main.async {
-			self.tableView.reloadData()
-		}
+		self.tableView.reloadData()
 	}
 	
 	func refreshUpdates(_ sender: UIRefreshControl) {
@@ -96,21 +98,19 @@ class ModuleViewController: UITableViewController {
 			let update = modules_sorted[indexPath.section][indexPath.row]
 			
 			let handleTable = {
-				DispatchQueue.main.async {
-					// Begin removing the module from the arrays and tableview
-					self.tableView.beginUpdates()
-					for (idx, md) in self.modules.enumerated() {
-						if md.objectid == update.objectid {
-							self.modules.remove(at: idx)
-							break
-						}
+				// Begin removing the module from the arrays and tableview
+				self.tableView.beginUpdates()
+				for (idx, md) in self.modules.enumerated() {
+					if md.objectid == update.objectid {
+						self.modules.remove(at: idx)
+						break
 					}
-					self.modules_sorted[indexPath.section].remove(at: indexPath.row)
-					self.tableView.deleteRows(at: [indexPath], with: .fade)
-					self.update_delete_row = nil
-					self.tableView.endUpdates()
-					self.reloadTable()
 				}
+				self.modules_sorted[indexPath.section].remove(at: indexPath.row)
+				self.tableView.deleteRows(at: [indexPath], with: .fade)
+				self.update_delete_row = nil
+				self.tableView.endUpdates()
+				self.reloadTable()
 			}
 			
 			if Network.IsOnline {

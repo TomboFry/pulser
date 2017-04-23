@@ -19,7 +19,16 @@ class ApplicationTableViewController: UITableViewController {
 	var applications_previous: [Application] = []
 	// This timer re-downloads all applications periodically in order
 	// to send out notifications
-	var timer: Timer = Timer()
+	var timer: Timer?
+	
+	var exitToLogin: Bool = false
+	
+	// Use this to change whether the text displays "Login" or "Logout"
+	@IBOutlet weak var btnLogInOut: UIBarButtonItem!
+	
+	deinit {
+		print("Deinit Application View Controller")
+	}
 	
 	// MARK: - Application Updating
 	
@@ -27,6 +36,7 @@ class ApplicationTableViewController: UITableViewController {
 		
 		// If we're in online mode (ie. we have a connection to the pulser server)
 		if Network.IsOnline {
+			btnLogInOut.title = "Logout"
 			// Make a request to the applications route to get all applications and their updates
 			Network.requestJSON("/api/applications", method: .GET, body: nil).then { res -> Promise<[Application]> in
 				self.applications_previous = self.applications
@@ -82,32 +92,22 @@ class ApplicationTableViewController: UITableViewController {
 					
 					// Loop through all the images in Core Data
 					for image in cd_image_list {
-						
 						// If we have a match, set the temporary image and break out of the loop
 						if image.app_slug == app_slug {
 							has_cd_image = image
 							break
 						}
 					}
-					
+
 					// If we didn't manage to find a matching image
 					// Or the matching image is empty
 					if has_cd_image == nil || (has_cd_image != nil && has_cd_image?.data?.count == nil) {
-						
-						var cd_image: CDImage
-						
-						if (has_cd_image == nil) {
-							// print("There was not an image for \(app.slug))")
-							// Create an image with its properties
-							cd_image = CDImage.insert()
-						} else {
-							// print("There was an image but it was empty... (for application: \(has_cd_image?.app_slug))")
-							cd_image = has_cd_image!
-						}
-						
+
+						let cd_image: CDImage = has_cd_image ?? CDImage.insert()
+
 						cd_image.app_slug = app_slug
 						cd_image.application = cd_app
-						
+
 						// Download the image data from the server
 						return Network.request(app_image, method: .GET, body: nil).then { img_data -> Promise<Application> in
 							// Set the image's data to what was downloaded
@@ -115,7 +115,7 @@ class ApplicationTableViewController: UITableViewController {
 							print("Downloaded Image (\(cd_image.data?.count))")
 							cd_app.image = cd_image
 							app.cd_image = cd_image
-							
+
 							return Promise(value: app)
 						}
 					} else {
@@ -124,8 +124,7 @@ class ApplicationTableViewController: UITableViewController {
 						has_cd_image?.application = cd_app
 						cd_app.image = has_cd_image
 						app.cd_image = has_cd_image
-						
-						// Finally, add the application to the array of applications for the tableview
+
 						return Promise(value: app)
 					}
 				})
@@ -167,35 +166,34 @@ class ApplicationTableViewController: UITableViewController {
 					Notifications.create(notification_body)
 				}
 				
+				return Promise(value: ())
+			}.catch { _ in
+				Network.alert("Server Error", message: "Couldn't get a list of applications from the server", viewController: self)
+				Network.IsOnline = false
+			}.always {
 				CDImage.emptyUnused(self.applications)
 				CoreDataManager.saveContext()
 				
 				// After everything is finished, reload the table
-				sender.endRefreshing()
 				self.reloadTable()
-				
-				return Promise(value: ())
-			}.catch { err in
 				sender.endRefreshing()
-				Network.alert("Server Error", message: "Couldn't get a list of applications from the server", viewController: self)
-				Network.IsOnline = false
 			}
 		} else {
+			btnLogInOut.title = "Log In"
 			applications.removeAll()
 			
 			applications = Application.fromCoreData()
 			
 			sender.endRefreshing()
 			self.reloadTable()
+			
+			Network.alert("Offline Mode", message: NetworkErrorEnum.coredata.rawValue, viewController: self)
 		}
 	}
 	
 	func reloadTable() {
 		applications = Application.sort(applications)
-		
-		DispatchQueue.main.async(execute: {
-			self.tableView.reloadData()
-		})
+		self.tableView.reloadData()
 	}
 	
 	func getUpdates(_ app_slug: String, updates: [Module]) {
@@ -210,23 +208,33 @@ class ApplicationTableViewController: UITableViewController {
 	}
 	
 	func updateTimer() {
-		if let interval_string = Preferences.get("update_frequency") {
-			let timer_interval: Int = Int(interval_string)!
-			
-			print ("User preferences changed!", timer_interval)
-			
-			switch timer_interval {
-				case 0:
-					timer.invalidate()
-					break
+		if Network.IsOnline {
+			if let interval_string = Preferences.get("update_frequency") {
+				let timer_interval: Int = Int(interval_string)!
+				
+				print ("")
+				print ("User preferences changed!", timer_interval)
+				
+				switch timer_interval {
 				case 1 ..< Int.max:
-					print ("Timer has been set for ")
+					print ("Timer has been set for \(timer_interval * 60) seconds")
 					timer = Timer.scheduledTimer(timeInterval: Double(timer_interval * 60), target: self, selector: #selector(ApplicationTableViewController.handleTimer), userInfo: nil, repeats: true)
 					break
 				default:
-					timer.invalidate()
+					removeTimer()
+					break
+				}
 			}
+		} else {
+			removeTimer()
 		}
+	}
+	
+	func removeTimer() {
+		if let timer = self.timer {
+			timer.invalidate()
+		}
+		self.timer = nil
 	}
 	
 	func handleTimer() {
@@ -241,10 +249,6 @@ class ApplicationTableViewController: UITableViewController {
 			// When the button is clicked, open the settings page for this app
 			UIApplication.shared.open(url, options: [:], completionHandler: nil)
 		}
-	}
-	
-	@IBAction func btnLogoutClick(_ sender: UIBarButtonItem) {
-		// Nothing, yet
 	}
 	
 	// MARK: - View Load
@@ -262,7 +266,6 @@ class ApplicationTableViewController: UITableViewController {
 		    object: nil)
 		
 		updateTimer()
-		
     }
 
     // MARK: - Table view data source
@@ -371,6 +374,17 @@ class ApplicationTableViewController: UITableViewController {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
     }
-    */
+	*/
+	override func viewWillDisappear(_ animated: Bool) {
+		if exitToLogin {
+			NotificationCenter.default.removeObserver(self)
+			removeTimer()
+			if Network.IsOnline {
+				Preferences.set("login_token", value: "")
+				Preferences.set("login_username", value: "")
+			}
+			print("Removing observer, setting timer to nil, and resetting preferences")
+		}
+	}
 
 }

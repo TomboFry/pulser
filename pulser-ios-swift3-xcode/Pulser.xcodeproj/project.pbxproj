@@ -17,6 +17,12 @@
 		E207EEAF1E6EA4AF009F21BB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E207EEAD1E6EA4AF009F21BB /* LaunchScreen.storyboard */; };
 		E207EEB81E6EAE2B009F21BB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E207EEB71E6EAE2B009F21BB /* Settings.bundle */; };
 		E2679C961EA77B7300A95560 /* PromiseKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2679C8D1EA77B5B00A95560 /* PromiseKit.framework */; };
+		E275C5BD1EACB57200881DF2 /* state_created.png in Resources */ = {isa = PBXBuildFile; fileRef = E275C5B81EACB57200881DF2 /* state_created.png */; };
+		E275C5BE1EACB57200881DF2 /* state_failed.png in Resources */ = {isa = PBXBuildFile; fileRef = E275C5B91EACB57200881DF2 /* state_failed.png */; };
+		E275C5BF1EACB57200881DF2 /* state_finished.png in Resources */ = {isa = PBXBuildFile; fileRef = E275C5BA1EACB57200881DF2 /* state_finished.png */; };
+		E275C5C01EACB57200881DF2 /* state_ongoing.png in Resources */ = {isa = PBXBuildFile; fileRef = E275C5BB1EACB57200881DF2 /* state_ongoing.png */; };
+		E275C5C11EACB57200881DF2 /* state_progress.png in Resources */ = {isa = PBXBuildFile; fileRef = E275C5BC1EACB57200881DF2 /* state_progress.png */; };
+		E275C5C81EACC16700881DF2 /* pulserlogo.png in Resources */ = {isa = PBXBuildFile; fileRef = E275C5C71EACC16700881DF2 /* pulserlogo.png */; };
 		E2B1CF351E7AA7630075F11E /* MarqueeLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B1CF341E7AA7630075F11E /* MarqueeLabel.swift */; };
 		E2B46BB81E7AEE0200C18D05 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B46BB71E7AEE0200C18D05 /* CoreDataManager.swift */; };
 		E2CEBA581E76CA2900DF019A /* ApplicationTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CEBA571E76CA2900DF019A /* ApplicationTableViewController.swift */; };
@@ -25,11 +31,6 @@
 		E2CF7C8C1E7A98A100AB431D /* DateHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2CF7C8B1E7A98A100AB431D /* DateHelper.swift */; };
 		E2E0DA061E72018200F7DFE5 /* ModuleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0DA051E72018200F7DFE5 /* ModuleViewController.swift */; };
 		E2E0DA081E7201E800F7DFE5 /* ModuleTableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0DA071E7201E800F7DFE5 /* ModuleTableCell.swift */; };
-		E2E0DA0F1E72027700F7DFE5 /* state_created.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0A1E72027700F7DFE5 /* state_created.png */; };
-		E2E0DA101E72027700F7DFE5 /* state_failed.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0B1E72027700F7DFE5 /* state_failed.png */; };
-		E2E0DA111E72027700F7DFE5 /* state_finished.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0C1E72027700F7DFE5 /* state_finished.png */; };
-		E2E0DA121E72027700F7DFE5 /* state_ongoing.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */; };
-		E2E0DA131E72027700F7DFE5 /* state_progress.png in Resources */ = {isa = PBXBuildFile; fileRef = E2E0DA0E1E72027700F7DFE5 /* state_progress.png */; };
 		E2E0DA151E7204BF00F7DFE5 /* Module.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E0DA141E7204BF00F7DFE5 /* Module.swift */; };
 		E2E823331E7F3A4D00CC88FB /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E823321E7F3A4D00CC88FB /* Notifications.swift */; };
 		E2F9E4201E7C0FAA006D4853 /* CDApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */; };
@@ -89,6 +90,12 @@
 		E207EEB01E6EA4AF009F21BB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E207EEB71E6EAE2B009F21BB /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		E2679C841EA77B5B00A95560 /* PromiseKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = PromiseKit.xcodeproj; path = "PromiseKit-4.1.8/PromiseKit.xcodeproj"; sourceTree = "<group>"; };
+		E275C5B81EACB57200881DF2 /* state_created.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_created.png; path = Assets/state_created.png; sourceTree = "<group>"; };
+		E275C5B91EACB57200881DF2 /* state_failed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_failed.png; path = Assets/state_failed.png; sourceTree = "<group>"; };
+		E275C5BA1EACB57200881DF2 /* state_finished.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_finished.png; path = Assets/state_finished.png; sourceTree = "<group>"; };
+		E275C5BB1EACB57200881DF2 /* state_ongoing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_ongoing.png; path = Assets/state_ongoing.png; sourceTree = "<group>"; };
+		E275C5BC1EACB57200881DF2 /* state_progress.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_progress.png; path = Assets/state_progress.png; sourceTree = "<group>"; };
+		E275C5C71EACC16700881DF2 /* pulserlogo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pulserlogo.png; path = Assets/pulserlogo.png; sourceTree = "<group>"; };
 		E2B1CF341E7AA7630075F11E /* MarqueeLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MarqueeLabel.swift; path = Classes/MarqueeLabel.swift; sourceTree = "<group>"; };
 		E2B46BB71E7AEE0200C18D05 /* CoreDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CoreDataManager.swift; path = Pulser/Classes/CoreDataManager.swift; sourceTree = SOURCE_ROOT; };
 		E2CEBA571E76CA2900DF019A /* ApplicationTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ApplicationTableViewController.swift; path = Controllers/ApplicationTableViewController.swift; sourceTree = "<group>"; };
@@ -97,11 +104,6 @@
 		E2CF7C8B1E7A98A100AB431D /* DateHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateHelper.swift; sourceTree = "<group>"; };
 		E2E0DA051E72018200F7DFE5 /* ModuleViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModuleViewController.swift; path = Controllers/ModuleViewController.swift; sourceTree = "<group>"; };
 		E2E0DA071E7201E800F7DFE5 /* ModuleTableCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ModuleTableCell.swift; path = Controllers/ModuleTableCell.swift; sourceTree = "<group>"; };
-		E2E0DA0A1E72027700F7DFE5 /* state_created.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_created.png; path = Assets/state_created.png; sourceTree = "<group>"; };
-		E2E0DA0B1E72027700F7DFE5 /* state_failed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_failed.png; path = Assets/state_failed.png; sourceTree = "<group>"; };
-		E2E0DA0C1E72027700F7DFE5 /* state_finished.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_finished.png; path = Assets/state_finished.png; sourceTree = "<group>"; };
-		E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_ongoing.png; path = Assets/state_ongoing.png; sourceTree = "<group>"; };
-		E2E0DA0E1E72027700F7DFE5 /* state_progress.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = state_progress.png; path = Assets/state_progress.png; sourceTree = "<group>"; };
 		E2E0DA141E7204BF00F7DFE5 /* Module.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Module.swift; path = Classes/Module.swift; sourceTree = "<group>"; };
 		E2E823321E7F3A4D00CC88FB /* Notifications.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Notifications.swift; path = Classes/Notifications.swift; sourceTree = "<group>"; };
 		E2F9E41D1E7C0FAA006D4853 /* CDApplication.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CDApplication.swift; path = Models/CDApplication.swift; sourceTree = "<group>"; };
@@ -207,11 +209,12 @@
 			isa = PBXGroup;
 			children = (
 				E207EEAB1E6EA4AF009F21BB /* Assets.xcassets */,
-				E2E0DA0A1E72027700F7DFE5 /* state_created.png */,
-				E2E0DA0B1E72027700F7DFE5 /* state_failed.png */,
-				E2E0DA0C1E72027700F7DFE5 /* state_finished.png */,
-				E2E0DA0D1E72027700F7DFE5 /* state_ongoing.png */,
-				E2E0DA0E1E72027700F7DFE5 /* state_progress.png */,
+				E275C5C71EACC16700881DF2 /* pulserlogo.png */,
+				E275C5B81EACB57200881DF2 /* state_created.png */,
+				E275C5B91EACB57200881DF2 /* state_failed.png */,
+				E275C5BA1EACB57200881DF2 /* state_finished.png */,
+				E275C5BB1EACB57200881DF2 /* state_ongoing.png */,
+				E275C5BC1EACB57200881DF2 /* state_progress.png */,
 			);
 			name = Assets;
 			sourceTree = "<group>";
@@ -331,12 +334,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				E207EEB81E6EAE2B009F21BB /* Settings.bundle in Resources */,
-				E2E0DA131E72027700F7DFE5 /* state_progress.png in Resources */,
-				E2E0DA111E72027700F7DFE5 /* state_finished.png in Resources */,
+				E275C5BD1EACB57200881DF2 /* state_created.png in Resources */,
+				E275C5C81EACC16700881DF2 /* pulserlogo.png in Resources */,
 				E207EEAF1E6EA4AF009F21BB /* LaunchScreen.storyboard in Resources */,
-				E2E0DA101E72027700F7DFE5 /* state_failed.png in Resources */,
-				E2E0DA0F1E72027700F7DFE5 /* state_created.png in Resources */,
-				E2E0DA121E72027700F7DFE5 /* state_ongoing.png in Resources */,
+				E275C5C01EACB57200881DF2 /* state_ongoing.png in Resources */,
+				E275C5BF1EACB57200881DF2 /* state_finished.png in Resources */,
+				E275C5C11EACB57200881DF2 /* state_progress.png in Resources */,
+				E275C5BE1EACB57200881DF2 /* state_failed.png in Resources */,
 				E207EEAC1E6EA4AF009F21BB /* Assets.xcassets in Resources */,
 				E207EEA71E6EA4AF009F21BB /* Main.storyboard in Resources */,
 			);

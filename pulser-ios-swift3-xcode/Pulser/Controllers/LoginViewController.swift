@@ -19,37 +19,39 @@ class LoginViewController: UIViewController {
 	@IBOutlet weak var btnCancel:        UIButton!
 	@IBOutlet weak var loadingIndicator: UIActivityIndicatorView!
 	
+	@IBAction func unwindToRootViewController(segue: UIStoryboardSegue) {
+		print("Unwind to Root View Controller")
+		(segue.source as! ApplicationTableViewController).exitToLogin = true
+	}
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 
-		CDImage.deleteAll(CDImage.self)
-		CDUpdate.deleteAll(CDUpdate.self)
-		CDApplication.deleteAll(CDApplication.self)
-		CDDeleteOnSync.deleteAll(CDDeleteOnSync.self)
+		//CDImage.deleteAll(CDImage.self)
+		//CDUpdate.deleteAll(CDUpdate.self)
+		//CDApplication.deleteAll(CDApplication.self)
+		//CDDeleteOnSync.deleteAll(CDDeleteOnSync.self)
 		
-		let cd_images: [CDImage] = CDImage.fetchAll()
-		var totalSize = 0
-		for img in cd_images {
-			if img.data != nil {
-				totalSize += (img.data?.count)!
-			}
-		}
-		print("Images:", CDImage.count(CDImage.self), "(Total Size: \(totalSize))")
-		print("Updates:", CDUpdate.count(CDUpdate.self))
-		print("Applications:", CDApplication.count(CDApplication.self))
-		print("Delete On Sync:", CDDeleteOnSync.count(CDDeleteOnSync.self))
+//		let cd_images: [CDImage] = CDImage.fetchAll()
+//		var totalSize = 0
+//		for img in cd_images {
+//			if img.data != nil {
+//				totalSize += (img.data?.count)!
+//			}
+//		}
+//
+//		print("Images:", CDImage.count(CDImage.self), "(Total Size: \(totalSize))")
+//		print("Applications:", CDApplication.count(CDApplication.self))
+//		print("Updates:", CDUpdate.count(CDUpdate.self))
+//		print("Delete On Sync:", CDDeleteOnSync.count(CDDeleteOnSync.self))
 		
-		if Preferences.get("login_token") != nil {
+		let token = Preferences.get("login_token")
+		
+		if token != nil && token != "" {
 			Network.requestJSON("/api/auth", method: .GET, body: nil).then { result in
 				self.showApplications()
 			}.catch { error in
-				let cd_apps: [CDApplication] = CDApplication.fetchAll()
-				if cd_apps.count > 0 {
-					Network.IsOnline = false
-					self.showApplications()
-				} else {
-					Network.alert("Error occurred", message: error.localizedDescription, viewController: nil)
-				}
+				self.hasCoreData(error as! NetworkError)
 			}
 		}
 		
@@ -58,6 +60,18 @@ class LoginViewController: UIViewController {
 		}
 		if let username = Preferences.get("login_username") {
 			txtUsername.text = username
+		}
+	}
+	
+	func hasCoreData(_ error: NetworkError) {
+		if error.localizedDescription == NetworkErrorEnum.connect.rawValue {
+			let cd_apps: [CDApplication] = CDApplication.fetchAll()
+			if cd_apps.count > 0 {
+				Network.IsOnline = false
+				self.showApplications()
+			}
+		} else {
+			Network.alert("Error occurred", message: error.localizedDescription, viewController: nil)
 		}
 	}
 
@@ -113,14 +127,12 @@ class LoginViewController: UIViewController {
 	}
 	
 	func showApplications() {
-		DispatchQueue.main.async {
-			self.performSegue(withIdentifier: "login_complete_segue", sender: self)
-		}
+		self.performSegue(withIdentifier: "login_complete_segue", sender: self)
 	}
 
 	@IBAction func btnLoginClick(_ sender: Any) {
-		setButtons(true);
 		if validateInput() {
+			setButtons(true);
 			var body: JSON = [:]
 			body["username"] = txtUsername.text!
 			body["password"] = txtPassword.text!
@@ -128,10 +140,10 @@ class LoginViewController: UIViewController {
 			Network.requestJSON("/api/login", method: .POST, body: body).then { data -> Promise<()> in
 				Preferences.set("login_token", value: data["data"] as! String)
 				self.showApplications()
-				
+				Network.IsOnline = true
 				return Promise(value: ())
 			}.catch { error in
-				return Network.alert("Error Occurred", message: error.localizedDescription, viewController: nil)
+				self.hasCoreData(error as! NetworkError)
 			}.always {
 				// Always hide the cancel button / activity indicator when we get a response.
 				self.setButtons(false)

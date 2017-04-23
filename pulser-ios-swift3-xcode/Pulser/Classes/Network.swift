@@ -13,7 +13,14 @@ import PromiseKit
 public typealias JSON = Dictionary<String, Any>
 
 public struct NetworkError: Error {
-	let message: String
+	public var localizedDescription: String
+}
+
+public enum NetworkErrorEnum: String {
+	case connect = "Could not connect to the server."
+	case coredata = "Using offline data"
+	case password = "Password incorrect"
+	case username = "User does not exist"
 }
 
 class Network {
@@ -42,7 +49,7 @@ class Network {
 			print("") // New line for neatness
 			print(path_format, "(\(method.rawValue))")
 			
-			// Creaste URL Request
+			// Create URL Request
 			var request = URLRequest(url: URL(string: path_format)!)
 			
 			// Set request HTTP method to GET. It could be POST as well
@@ -69,32 +76,31 @@ class Network {
 					data, response, error in
 					// Check for error
 					if error != nil || data == nil {
-						reject(NetworkError(message: error!.localizedDescription))
+						print("Server Response: \(error!.localizedDescription)")
+						reject(NetworkError(localizedDescription: error!.localizedDescription))
 					} else {
 						fulfill(data!)
 					}
 				}.resume()
 			}
 		} else {
-			return Promise(error: NetworkError(message: "For some reason, we weren't able to connect. Either there's a problem with the URL you provided, or it's just having trouble connecting."))
+			return Promise(error: NetworkError(localizedDescription: "For some reason, we weren't able to connect. Either there's a problem with the URL you provided, or it's just having trouble connecting."))
 		}
 	}
 	
 	static func requestJSON(_ path: String, method: Method, body: JSON?) -> Promise<JSON> {
-		
 		return request(path, method: method, body: body).then { data -> Promise<JSON> in
 			// Convert server json response to NSDictionary
 			if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? JSON {
 				if dict["status"] as! String == "error" {
-					return Promise(error: NetworkError(message: dict["data"] as! String))
+					return Promise(error: NetworkError(localizedDescription: dict["data"] as! String))
 				} else {
 					return Promise(value: dict)
 				}
 			} else {
-				return Promise(error: NetworkError(message: "Could not parse response from server"))
+				return Promise(error: NetworkError(localizedDescription: "Could not parse response from server"))
 			}
 		}
-		
 	}
 	
 	static func encodeURL(_ url: String) -> String? {
@@ -107,32 +113,23 @@ class Network {
 	}
 	
 	private static func validateUrl(_ url: String) -> Bool {
-		/*if let nsurl = NSURL(string: url) {
-			let canopen = UIApplication.shared.canOpenURL(nsurl as URL)
-			print("Can opener", canopen)
-			return canopen
-		}*/
-		
-		//let urlRegEx = "(?:(?:https?|ftp|file):\\/\\/|www\\.|ftp\\.)(?:\\([-A-Z0-9+&@#\\/%=~_|$?!:,.]*\\)|[-A-Z0-9+&@#\\/%=~_|$?!:,.])*(?:\\([-A-Z0-9+&@#\\/%=~_|$?!:,.]*\\)|[A-Z0-9+&@#\\/%=~_|$])"
 		let urlRegEx = "^(?:(?:https?|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#]\\S*)?$"
 		let canopen = NSPredicate(format: "SELF MATCHES %@", urlRegEx).evaluate(with: url)
 		return canopen
 	}
 	
 	static func alert(_ title: String, message: String, viewController vc: UIViewController?) {
-		DispatchQueue.main.async {
-			// Create an alert controller
-			let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
-			
-			// Add the settings button and a cancel button that just closes the window
-			alert.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
-			
-			// Display the alert
-			var viewController = UIApplication.shared.keyWindow?.rootViewController
-			if vc != nil {
-				viewController = vc
-			}
-			viewController?.present(alert, animated: true, completion: nil)
+		// Create an alert controller
+		let alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
+		
+		// Add the settings button and a cancel button that just closes the window
+		alert.addAction(UIAlertAction(title: "Close", style: .cancel, handler: nil))
+		
+		// Display the alert
+		var viewController = UIApplication.shared.keyWindow?.rootViewController
+		if vc != nil {
+			viewController = vc
 		}
+		viewController?.present(alert, animated: true, completion: nil)
 	}
 }
