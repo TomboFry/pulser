@@ -152,7 +152,18 @@ class LoginViewController: UIViewController {
 	}
 	
 	@IBAction func btnRegisterClick(_ sender: Any) {
-		
+		if validateInput() {
+			setButtons(true)
+			var body: JSON = [:]
+			body["username"] = txtUsername.text!
+			body["password"] = txtPassword.text!
+			
+			Network.requestJSON("/api/users", method: .POST, body: body).then { data in
+				self.btnLoginClick(sender)
+				}.catch { error in
+					Network.alert("Could not register", message: (error as! NetworkError).localizedDescription, viewController: self)
+			}
+		}
 	}
 	
 	@IBAction func btnCancelClick(_ sender: Any) {
